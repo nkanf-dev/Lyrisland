@@ -5,7 +5,6 @@ struct IslandContentView: View {
     @ObservedObject var syncEngine: PlaybackSyncEngine
     @ObservedObject var lyricsManager: LyricsManager
     @State private var islandState: IslandState = .compact
-    @State private var dragStartLocation: CGPoint?
 
     var body: some View {
         ZStack {
@@ -26,25 +25,9 @@ struct IslandContentView: View {
         }
         .frame(width: widthForState, height: heightForState)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: islandState)
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    if dragStartLocation == nil {
-                        dragStartLocation = value.startLocation
-                    }
-                }
-                .onEnded { value in
-                    let distance = hypot(
-                        value.location.x - (dragStartLocation ?? value.startLocation).x,
-                        value.location.y - (dragStartLocation ?? value.startLocation).y
-                    )
-                    // Only cycle state if it was a tap (minimal movement)
-                    if distance < 5 {
-                        cycleState()
-                    }
-                    dragStartLocation = nil
-                }
-        )
+        .onReceive(NotificationCenter.default.publisher(for: .islandTapped)) { _ in
+            cycleState()
+        }
         .onChange(of: islandState) { _, newState in
             resizePanel(for: newState)
         }

@@ -72,6 +72,30 @@ final class DynamicIslandPanel: NSPanel {
         setFrameOrigin(NSPoint(x: x, y: y))
     }
 
+    // Track mouse movement to distinguish clicks from drags
+    private var mouseDownOrigin: NSPoint?
+
+    override func mouseDown(with event: NSEvent) {
+        mouseDownOrigin = NSEvent.mouseLocation
+        super.mouseDown(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        if let origin = mouseDownOrigin {
+            let end = NSEvent.mouseLocation
+            let distance = hypot(end.x - origin.x, end.y - origin.y)
+            if distance < 5 {
+                NotificationCenter.default.post(name: .islandTapped, object: nil)
+            }
+        }
+        mouseDownOrigin = nil
+        super.mouseUp(with: event)
+    }
+
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+}
+
+extension Notification.Name {
+    static let islandTapped = Notification.Name("islandTapped")
 }
