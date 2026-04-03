@@ -15,12 +15,22 @@ struct ExpandedIslandView: View {
 
                 ForEach(lyrics.lines[range]) { line in
                     let isCurrent = line.id == lyrics.lines[currentIdx].id
-                    Text(line.text)
-                        .font(.system(size: isCurrent ? 15 : 12, weight: isCurrent ? .bold : .regular))
-                        .foregroundStyle(isCurrent ? .white : .white.opacity(0.35))
-                        .lineLimit(1)
+                    if isCurrent {
+                        MarqueeText(
+                            text: line.text,
+                            font: .system(size: 15, weight: .bold),
+                            color: .white
+                        )
+                        .frame(height: 20)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .blur(radius: isCurrent ? 0 : 0.5)
+                    } else {
+                        Text(line.text)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.white.opacity(0.35))
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .blur(radius: 0.5)
+                    }
                 }
             } else {
                 Text("lyrics.no_lyrics")

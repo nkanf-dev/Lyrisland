@@ -18,14 +18,13 @@ struct CompactIslandView: View {
             }
 
             // Status-aware text
-            Text(displayText)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(displayTextOpacity)
-                .lineLimit(1)
-                .transition(.push(from: .bottom))
-                .id(currentLineId)
-
-            Spacer()
+            MarqueeText(
+                text: displayText,
+                font: .system(size: 13, weight: .medium),
+                color: displayTextOpacity
+            )
+            .transition(.push(from: .bottom))
+            .id(currentLineId)
         }
         .padding(.horizontal, 16)
     }
