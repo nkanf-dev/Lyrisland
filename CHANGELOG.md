@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — 2026-04-04
+
+### Added
+
+- App 图标：使用 Icon Composer 制作的 Liquid Glass 风格图标（dark variant），集成到 Asset Catalog 和关于页面
+- 菜单栏 Tray 图标：手绘 SVG 矢量图标（小岛 + 波浪），支持深色/浅色模式自适应
+
 ## 0.3.0 — 2026-04-04
 
 ### Fixed
