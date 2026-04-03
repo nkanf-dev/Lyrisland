@@ -4,6 +4,7 @@
 
 ### Added
 
+- 双行歌词显示模式（卡拉OK风格），同时显示当前行和下一行歌词，可通过菜单栏 ⌘D 切换 (#6)
 - 新增网易云音乐歌词源（NeteaseProvider），Fallback 链扩展为 LRCLIB → Musixmatch → SodaMusic → Netease (#4)
 - 国际化支持（i18n），使用 String Catalog（.xcstrings）
 - 简体中文翻译（Onboarding、菜单栏、歌词状态提示）

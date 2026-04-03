@@ -1,20 +1,23 @@
 import SwiftUI
 
 /// Expanded state: shows the current lyric line with surrounding context.
+/// When dual-line mode is on, the next line is styled distinctly from context lines.
 struct ExpandedIslandView: View {
     @ObservedObject var syncEngine: PlaybackSyncEngine
     @ObservedObject var lyricsManager: LyricsManager
+    @ObservedObject var appState: AppState
 
     private let visibleLineCount = 5
 
     var body: some View {
         VStack(spacing: 4) {
             if let lyrics = lyricsManager.currentLyrics {
-                let currentIdx = lyrics.lineIndex(at: syncEngine.position) ?? 0
+                let currentIdx = syncEngine.currentLineIndex ?? 0
                 let range = contextRange(around: currentIdx, total: lyrics.lines.count)
 
                 ForEach(lyrics.lines[range]) { line in
                     let isCurrent = line.id == lyrics.lines[currentIdx].id
+                    let isNext = appState.dualLineMode && line.id == currentIdx + 1
                     if isCurrent {
                         MarqueeText(
                             text: line.text,
@@ -24,6 +27,13 @@ struct ExpandedIslandView: View {
                         .frame(height: 20)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                    } else if isNext {
+                        Text(line.text)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.7))
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     } else {
                         Text(line.text)
                             .font(.system(size: 12))
@@ -42,7 +52,7 @@ struct ExpandedIslandView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .animation(.smooth(duration: 0.35), value: lyricsManager.currentLyrics?.lineIndex(at: syncEngine.position))
+        .animation(.smooth(duration: 0.35), value: syncEngine.currentLineIndex)
     }
 
     private func contextRange(around index: Int, total: Int) -> ClosedRange<Int> {

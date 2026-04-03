@@ -22,8 +22,13 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
     }
 
+    @Published var dualLineMode: Bool {
+        didSet { UserDefaults.standard.set(dualLineMode, forKey: "dualLineMode") }
+    }
+
     init() {
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        dualLineMode = UserDefaults.standard.bool(forKey: "dualLineMode")
     }
 
     /// Check if Spotify.app is installed.

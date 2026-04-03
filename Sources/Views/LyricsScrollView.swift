@@ -6,7 +6,7 @@ struct LyricsScrollView: View {
     @ObservedObject var syncEngine: PlaybackSyncEngine
 
     private var currentIndex: Int {
-        lyrics.lineIndex(at: syncEngine.position) ?? 0
+        syncEngine.currentLineIndex ?? 0
     }
 
     var body: some View {

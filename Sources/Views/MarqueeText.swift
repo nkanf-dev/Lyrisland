@@ -7,6 +7,7 @@ struct MarqueeText: View {
     let font: Font
     let color: Color
 
+    var scrollEnabled: Bool = true
     var speed: Double = 30 // points per second
     var startDelay: Double = 1.5
     var endDelay: Double = 1.5
@@ -22,7 +23,7 @@ struct MarqueeText: View {
     }
 
     private var needsScroll: Bool {
-        overflow > 0
+        scrollEnabled && overflow > 0
     }
 
     var body: some View {

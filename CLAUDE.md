@@ -13,8 +13,9 @@ xcodegen generate
 # Build
 xcodebuild -project Lyrisland.xcodeproj -scheme Lyrisland -destination 'platform=macOS' build
 
-# Run the built app
-open ~/Library/Developer/Xcode/DerivedData/Lyrisland-*/Build/Products/Debug/Lyrisland.app
+# Run the built app (use xcodebuild -showBuildSettings to find the correct DerivedData hash,
+# as there may be multiple Lyrisland-* directories; the glob may launch a stale build)
+open "$(xcodebuild -project Lyrisland.xcodeproj -scheme Lyrisland -showBuildSettings 2>/dev/null | grep -m1 'BUILT_PRODUCTS_DIR' | awk '{print $3}')/Lyrisland.app"
 ```
 
 **Important:** `xcodegen generate` overwrites `Lyrisland.entitlements` with values from `project.yml`'s `entitlements.properties`. Keep those in sync — don't hand-edit the entitlements file.

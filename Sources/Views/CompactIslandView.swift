@@ -1,9 +1,11 @@
 import SwiftUI
 
 /// Compact state: single-line song title + playing indicator.
+/// When dual-line mode is on, also shows the upcoming next line below.
 struct CompactIslandView: View {
     @ObservedObject var syncEngine: PlaybackSyncEngine
     @ObservedObject var lyricsManager: LyricsManager
+    @ObservedObject var appState: AppState
 
     var body: some View {
         HStack(spacing: 10) {
@@ -17,15 +19,31 @@ struct CompactIslandView: View {
                     .foregroundStyle(.white.opacity(0.6))
             }
 
-            // Status-aware text
-            MarqueeText(
-                text: displayText,
-                font: .system(size: 13, weight: .medium),
-                color: displayTextOpacity
-            )
-            .transition(.push(from: .bottom).combined(with: .opacity))
-            .id(currentLineId)
-            .animation(.smooth(duration: 0.35), value: currentLineId)
+            // Lyrics display
+            if appState.dualLineMode, let lyrics = lyricsManager.currentLyrics, let idx = currentLineIndex {
+                // Dual-line mode: ForEach keyed by line index so SwiftUI tracks
+                // the next line sliding up to become the current line
+                let indices = idx + 1 < lyrics.lines.count ? [idx, idx + 1] : [idx]
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(indices, id: \.self) { lineIdx in
+                        DualLineRow(text: lyrics.lines[lineIdx].text, isCurrent: lineIdx == idx)
+                            .transition(.push(from: .bottom).combined(with: .opacity))
+                    }
+                }
+                .animation(.smooth(duration: 0.35), value: idx)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                // Single-line mode: original MarqueeText behavior
+                MarqueeText(
+                    text: displayText,
+                    font: .system(size: 13, weight: .medium),
+                    color: displayTextOpacity
+                )
+                .transition(.push(from: .bottom).combined(with: .opacity))
+                .id(currentLineIndex ?? -1)
+                .animation(.smooth(duration: 0.35), value: currentLineIndex)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.horizontal, 16)
     }
@@ -37,15 +55,14 @@ struct CompactIslandView: View {
         return "pause.fill"
     }
 
-    private var currentLineId: Int? {
-        guard let lyrics = lyricsManager.currentLyrics else { return nil }
-        return lyrics.lineIndex(at: syncEngine.position)
+    private var currentLineIndex: Int? {
+        syncEngine.currentLineIndex
     }
 
     private var displayText: String {
         // Has lyrics loaded
         if let lyrics = lyricsManager.currentLyrics {
-            if let idx = lyrics.lineIndex(at: syncEngine.position) {
+            if let idx = currentLineIndex {
                 return lyrics.lines[idx].text
             }
             // Before first line — lyrics are loaded but haven't started yet
@@ -72,10 +89,24 @@ struct CompactIslandView: View {
     }
 
     private var displayTextOpacity: Color {
-        if let lyrics = lyricsManager.currentLyrics,
-           lyrics.lineIndex(at: syncEngine.position) != nil {
+        if lyricsManager.currentLyrics != nil, currentLineIndex != nil {
             return .white
         }
         return .white.opacity(0.5)
+    }
+}
+
+/// Lightweight equatable row with marquee support for long text.
+private struct DualLineRow: View, Equatable {
+    let text: String
+    let isCurrent: Bool
+
+    var body: some View {
+        MarqueeText(
+            text: text,
+            font: isCurrent ? .system(size: 13, weight: .medium) : .system(size: 11),
+            color: isCurrent ? .white : .white.opacity(0.4),
+            scrollEnabled: isCurrent
+        )
     }
 }

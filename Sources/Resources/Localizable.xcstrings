@@ -212,6 +212,12 @@
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "重置偏移" } }
       }
     },
+    "menu.dual_line": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Dual-Line Mode" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "双行歌词模式" } }
+      }
+    },
     "menu.quit": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Quit" } },

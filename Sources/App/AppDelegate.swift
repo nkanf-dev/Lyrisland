@@ -55,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func launchMainUI() {
+        syncEngine.lyricsManager = lyricsManager
         setupIslandPanel()
         startPlaybackMonitoring()
     }
@@ -63,6 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var trackMenuItem: NSMenuItem?
     private var sourceMenuItem: NSMenuItem?
+    private var dualLineMenuItem: NSMenuItem?
     private var offsetMenuItem: NSMenuItem?
 
     private func setupMenuBar() {
@@ -86,6 +88,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
 
         menu.addItem(NSMenuItem(title: String(localized: "menu.show_hide"), action: #selector(toggleIsland), keyEquivalent: "l"))
+
+        dualLineMenuItem = NSMenuItem(title: String(localized: "menu.dual_line"), action: #selector(toggleDualLine), keyEquivalent: "d")
+        dualLineMenuItem?.state = appState.dualLineMode ? .on : .off
+        menu.addItem(dualLineMenuItem!)
 
         menu.addItem(.separator())
 
@@ -131,7 +137,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupIslandPanel() {
         let contentView = IslandContentView(
             syncEngine: syncEngine,
-            lyricsManager: lyricsManager
+            lyricsManager: lyricsManager,
+            appState: appState
         )
         islandPanel = DynamicIslandPanel(contentView: contentView)
         islandPanel?.orderFrontRegardless()
@@ -201,6 +208,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // MARK: - Actions
+
+    @objc private func toggleDualLine() {
+        appState.dualLineMode.toggle()
+        dualLineMenuItem?.state = appState.dualLineMode ? .on : .off
+    }
 
     @objc private func toggleIsland() {
         if islandPanel?.isVisible == true {

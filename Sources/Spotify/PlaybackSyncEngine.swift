@@ -16,8 +16,15 @@ final class PlaybackSyncEngine: ObservableObject {
     /// Views read `position` inside a body that depends on `tick`.
     @Published private(set) var tick: UInt64 = 0
 
+    /// Cached current line index — only published when it actually changes,
+    /// so views that only care about line identity don't redraw every tick.
+    @Published private(set) var currentLineIndex: Int?
+
     /// The current interpolated position (seconds). Read this in view bodies.
     private(set) var position: TimeInterval = 0
+
+    /// Reference to lyrics for line index caching.
+    weak var lyricsManager: LyricsManager?
 
     /// The most recent anchor: (system timestamp, playback position in seconds).
     private var anchor: (date: Date, position: TimeInterval)?
@@ -84,5 +91,11 @@ final class PlaybackSyncEngine: ObservableObject {
     private func updatePosition() {
         position = interpolatedPosition
         tick &+= 1
+
+        // Update cached line index — only publishes when it actually changes
+        let newIdx = lyricsManager?.currentLyrics?.lineIndex(at: position)
+        if newIdx != currentLineIndex {
+            currentLineIndex = newIdx
+        }
     }
 }
