@@ -8,6 +8,7 @@ struct MarqueeText: View {
     let color: Color
 
     var scrollEnabled: Bool = true
+    var loops: Bool = true
     var speed: Double = 30 // points per second
     var startDelay: Double = 1.5
     var endDelay: Double = 1.5
@@ -118,8 +119,10 @@ struct MarqueeText: View {
         case .end:
             try? await Task.sleep(for: .seconds(endDelay))
             guard !Task.isCancelled else { return }
-            offset = 0
-            animationPhase = .start
+            if loops {
+                offset = 0
+                animationPhase = .start
+            }
         }
     }
 

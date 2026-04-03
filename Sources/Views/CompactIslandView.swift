@@ -42,7 +42,8 @@ struct CompactIslandView: View {
                 MarqueeText(
                     text: displayText,
                     font: .system(size: 13, weight: .medium),
-                    color: displayTextOpacity
+                    color: displayTextOpacity,
+                    loops: false
                 )
                 .transition(.push(from: .bottom).combined(with: .opacity))
                 .id(currentLineIndex ?? -1)
@@ -111,7 +112,8 @@ private struct DualLineRow: View, Equatable {
             text: text,
             font: isCurrent ? .system(size: 13, weight: .medium) : .system(size: 11),
             color: isCurrent ? .white : .white.opacity(0.4),
-            scrollEnabled: isCurrent
+            scrollEnabled: isCurrent,
+            loops: false
         )
     }
 }

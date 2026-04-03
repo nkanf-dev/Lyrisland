@@ -30,7 +30,8 @@ struct ExpandedIslandView: View {
                             MarqueeText(
                                 text: line.text,
                                 font: .system(size: 15, weight: .bold),
-                                color: .white
+                                color: .white,
+                                loops: false
                             )
                             .frame(height: 20)
                             .frame(maxWidth: .infinity, alignment: .leading)
