@@ -16,6 +16,11 @@ build/
 .AppleDouble
 .LSOverride
 
+# Release artifacts
+*.zip
+*.dmg
+*.pkg
+
 # Misc
 *.swp
 *~
