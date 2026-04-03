@@ -44,21 +44,36 @@ Lyrisland displays real-time Spotify lyrics at the top of your screen in a Dynam
 
 ## Preview
 
-| Compact | Expanded | Full |
-|:---:|:---:|:---:|
-| ![Compact](Assets/screenshots/attached.png) | ![Expanded](Assets/screenshots/expanded.png) | ![Full](Assets/screenshots/full.png) |
+#### Compact
+![Compact](Assets/screenshots/attached.png)
+
+#### Expanded
+![Expanded](Assets/screenshots/expanded.png)
+
+#### Full
+![Full](Assets/screenshots/full.png)
 
 ### Background Styles
 
-| Solid | Album Gradient | Frosted Glass | Dynamic Gradient |
-|:---:|:---:|:---:|:---:|
-| ![Solid](Assets/screenshots/bg-solid.png) | ![Gradient](Assets/screenshots/bg-album-gradient.png) | ![Glass](Assets/screenshots/bg-glass.png) | ![Dynamic](Assets/screenshots/bg-dynamic-gradient.png) |
+#### Solid
+![Solid](Assets/screenshots/bg-solid.png)
+
+#### Album Gradient
+![Gradient](Assets/screenshots/bg-album-gradient.png)
+
+#### Frosted Glass
+![Glass](Assets/screenshots/bg-glass.png)
+
+#### Dynamic Gradient
+![Dynamic](Assets/screenshots/bg-dynamic-gradient.png)
 
 ### Position Modes
 
-| Attached to Menu Bar | Free Floating |
-|:---:|:---:|
-| ![Attached](Assets/screenshots/attached.png) | ![Detached](Assets/screenshots/detached-compact.png) |
+#### Attached to Menu Bar
+![Attached](Assets/screenshots/attached.png)
+
+#### Free Floating
+![Detached](Assets/screenshots/detached-compact.png)
 
 ## Getting Started
 

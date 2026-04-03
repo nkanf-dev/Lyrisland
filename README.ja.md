@@ -44,21 +44,36 @@ Lyrisland は、画面上部にダイナミックアイランド（Dynamic Islan
 
 ## プレビュー
 
-| Compact | Expanded | Full |
-|:---:|:---:|:---:|
-| ![Compact](Assets/screenshots/attached.png) | ![Expanded](Assets/screenshots/expanded.png) | ![Full](Assets/screenshots/full.png) |
+#### Compact
+![Compact](Assets/screenshots/attached.png)
+
+#### Expanded
+![Expanded](Assets/screenshots/expanded.png)
+
+#### Full
+![Full](Assets/screenshots/full.png)
 
 ### 背景スタイル
 
-| ソリッド | アルバムグラデーション | すりガラス | ダイナミックグラデーション |
-|:---:|:---:|:---:|:---:|
-| ![Solid](Assets/screenshots/bg-solid.png) | ![Gradient](Assets/screenshots/bg-album-gradient.png) | ![Glass](Assets/screenshots/bg-glass.png) | ![Dynamic](Assets/screenshots/bg-dynamic-gradient.png) |
+#### ソリッド
+![Solid](Assets/screenshots/bg-solid.png)
+
+#### アルバムグラデーション
+![Gradient](Assets/screenshots/bg-album-gradient.png)
+
+#### すりガラス
+![Glass](Assets/screenshots/bg-glass.png)
+
+#### ダイナミックグラデーション
+![Dynamic](Assets/screenshots/bg-dynamic-gradient.png)
 
 ### 配置モード
 
-| メニューバー吸着 | フリーフロート |
-|:---:|:---:|
-| ![Attached](Assets/screenshots/attached.png) | ![Detached](Assets/screenshots/detached-compact.png) |
+#### メニューバー吸着
+![Attached](Assets/screenshots/attached.png)
+
+#### フリーフロート
+![Detached](Assets/screenshots/detached-compact.png)
 
 ## はじめに
 
