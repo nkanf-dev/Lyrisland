@@ -17,9 +17,7 @@ build/
 .LSOverride
 
 # Release artifacts
-*.zip
-*.dmg
-*.pkg
+dist/
 
 # Misc
 *.swp
