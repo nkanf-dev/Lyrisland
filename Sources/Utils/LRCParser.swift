@@ -8,7 +8,7 @@ enum LRCParser {
     ///   - translations: Optional parallel translation lines keyed by time (seconds).
     static func parse(_ raw: String, translations: [TimeInterval: String]? = nil) -> [LyricLine] {
         let pattern = #"\[(\d{1,2}):(\d{2})\.(\d{2,3})\]\s*(.*)"#
-        let regex = try! NSRegularExpression(pattern: pattern)
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
 
         var lines: [LyricLine] = []
         for line in raw.components(separatedBy: .newlines) {

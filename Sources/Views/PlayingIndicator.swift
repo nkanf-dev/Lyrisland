@@ -6,12 +6,12 @@ struct PlayingIndicator: View {
 
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(0..<3, id: \.self) { i in
+            ForEach(0 ..< 3, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 1)
                     .fill(.green)
                     .frame(width: 3)
                     .scaleEffect(
-                        y: animating ? CGFloat.random(in: 0.3...1.0) : 0.4,
+                        y: animating ? CGFloat.random(in: 0.3 ... 1.0) : 0.4,
                         anchor: .bottom
                     )
                     .animation(

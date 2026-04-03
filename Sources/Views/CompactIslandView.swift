@@ -31,8 +31,8 @@ struct CompactIslandView: View {
     }
 
     private var statusIcon: String {
-        if !syncEngine.isPlaying && syncEngine.position == 0 {
-            return "antenna.radiowaves.left.and.right.slash"  // Not connected
+        if !syncEngine.isPlaying, syncEngine.position == 0 {
+            return "antenna.radiowaves.left.and.right.slash" // Not connected
         }
         return "pause.fill"
     }

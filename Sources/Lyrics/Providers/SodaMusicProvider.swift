@@ -33,7 +33,8 @@ struct SodaMusicProvider: LyricsProvider {
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let dataObj = json["data"] as? [String: Any],
-              let tracks = dataObj["track_list"] as? [[String: Any]] else {
+              let tracks = dataObj["track_list"] as? [[String: Any]]
+        else {
             return nil
         }
 
@@ -66,7 +67,7 @@ struct SodaMusicProvider: LyricsProvider {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.httpBody = "track_id=\(trackId)&media_type=track&queue_type=".data(using: .utf8)
+        request.httpBody = Data("track_id=\(trackId)&media_type=track&queue_type=".utf8)
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -77,12 +78,13 @@ struct SodaMusicProvider: LyricsProvider {
               let dataObj = json["data"] as? [String: Any],
               let trackInfo = dataObj["track_info"] as? [String: Any],
               let lyric = trackInfo["lyric"] as? [String: Any],
-              let content = lyric["content"] as? String else {
+              let content = lyric["content"] as? String
+        else {
             return nil
         }
 
         // Parse translations if available
-        var translationMap: [TimeInterval: String]? = nil
+        var translationMap: [TimeInterval: String]?
         if let langTranslations = lyric["lang_translations"] as? [String: Any] {
             // Try Chinese first, then any available
             let preferredKeys = ["zh", "zh-Hans", "en"]

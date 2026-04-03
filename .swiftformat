@@ -1,0 +1,10 @@
+--swiftversion 5.10
+--indent 4
+--indentcase false
+--trimwhitespace always
+--voidtype void
+--wraparguments before-first
+--wrapcollections before-first
+--maxwidth 140
+--semicolons never
+--exclude .build

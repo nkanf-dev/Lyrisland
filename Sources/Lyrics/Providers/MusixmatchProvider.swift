@@ -32,7 +32,7 @@ final class MusixmatchProvider: LyricsProvider, @unchecked Sendable {
             URLQueryItem(name: "usertoken", value: token),
             URLQueryItem(name: "format", value: "json"),
             URLQueryItem(name: "app_id", value: appId),
-            URLQueryItem(name: "t", value: String(Int.random(in: 1000...9999))),
+            URLQueryItem(name: "t", value: String(Int.random(in: 1000 ... 9999))),
         ]
 
         guard let url = components.url else { return nil }
@@ -48,14 +48,15 @@ final class MusixmatchProvider: LyricsProvider, @unchecked Sendable {
         var components = URLComponents(string: "\(baseURL)/token.get")!
         components.queryItems = [
             URLQueryItem(name: "app_id", value: appId),
-            URLQueryItem(name: "t", value: String(Int.random(in: 1000...9999))),
+            URLQueryItem(name: "t", value: String(Int.random(in: 1000 ... 9999))),
         ]
 
         let (data, _) = try await URLSession.shared.data(from: components.url!)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let message = json["message"] as? [String: Any],
               let body = message["body"] as? [String: Any],
-              let token = body["user_token"] as? String else {
+              let token = body["user_token"] as? String
+        else {
             throw MusixmatchError.tokenFailed
         }
 
@@ -66,7 +67,7 @@ final class MusixmatchProvider: LyricsProvider, @unchecked Sendable {
     // MARK: - Request with captcha/renew retry
 
     private func requestWithRetry(url: URL) async throws -> Data {
-        for attempt in 0..<maxCaptchaRetries {
+        for attempt in 0 ..< maxCaptchaRetries {
             let (data, response) = try await URLSession.shared.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse else {
@@ -79,7 +80,6 @@ final class MusixmatchProvider: LyricsProvider, @unchecked Sendable {
                    let message = json["message"] as? [String: Any],
                    let header = message["header"] as? [String: Any],
                    let statusCode = header["status_code"] as? Int {
-
                     if statusCode == 401 {
                         let hint = header["hint"] as? String ?? ""
                         if hint == "renew" {
@@ -119,7 +119,8 @@ final class MusixmatchProvider: LyricsProvider, @unchecked Sendable {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let message = json["message"] as? [String: Any],
               let body = message["body"] as? [String: Any],
-              let macroCalls = body["macro_calls"] as? [String: Any] else {
+              let macroCalls = body["macro_calls"] as? [String: Any]
+        else {
             return nil
         }
 
@@ -145,7 +146,8 @@ final class MusixmatchProvider: LyricsProvider, @unchecked Sendable {
               let richsync = body["richsync"] as? [String: Any],
               let richsyncBody = richsync["richsync_body"] as? String,
               let bodyData = richsyncBody.data(using: .utf8),
-              let entries = try? JSONSerialization.jsonObject(with: bodyData) as? [[String: Any]] else {
+              let entries = try? JSONSerialization.jsonObject(with: bodyData) as? [[String: Any]]
+        else {
             return nil
         }
 
@@ -169,7 +171,8 @@ final class MusixmatchProvider: LyricsProvider, @unchecked Sendable {
               let subtitleList = body["subtitle_list"] as? [[String: Any]],
               let first = subtitleList.first,
               let subtitle = first["subtitle"] as? [String: Any],
-              let subtitleBody = subtitle["subtitle_body"] as? String else {
+              let subtitleBody = subtitle["subtitle_body"] as? String
+        else {
             return nil
         }
 

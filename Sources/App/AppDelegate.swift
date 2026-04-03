@@ -1,6 +1,6 @@
 import AppKit
-import SwiftUI
 import Combine
+import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let appState = AppState()
     private var cancellables = Set<AnyCancellable>()
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    func applicationDidFinishLaunching(_: Notification) {
         setupMenuBar()
 
         if appState.hasCompletedOnboarding {
@@ -140,8 +140,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Playback Monitoring
 
     private enum PollRate: TimeInterval {
-        case playing = 0.2    // 200ms — smooth sync
-        case paused = 1.0     // 1s — just watch for resume
+        case playing = 0.2 // 200ms — smooth sync
+        case paused = 1.0 // 1s — just watch for resume
         case notRunning = 3.0 // 3s — check if Spotify launched
     }
 

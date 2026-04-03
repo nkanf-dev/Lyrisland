@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 import QuartzCore
 
 /// Maintains a high-precision interpolated playback position.
@@ -35,7 +35,7 @@ final class PlaybackSyncEngine: ObservableObject {
 
     /// Called by the AppleScript polling timer.
     func calibrate(position: TimeInterval, isPlaying: Bool) {
-        self.anchor = (Date(), position)
+        anchor = (Date(), position)
         let wasPlaying = self.isPlaying
         self.isPlaying = isPlaying
 

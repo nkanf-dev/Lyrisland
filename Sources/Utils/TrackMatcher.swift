@@ -43,7 +43,7 @@ enum TrackMatcher {
         let albumScore = candidate.album.map { compareName(target.album, $0) }
         let durationScore = candidate.durationMs.map { compareDuration(target.durationMs, $0) }
 
-        var total: Double = Double(nameScore.rawValue)
+        var total = Double(nameScore.rawValue)
             + Double(artistScore.rawValue)
         var maxPossible: Double = 14 // name(7) + artist(7)
 
@@ -59,16 +59,15 @@ enum TrackMatcher {
         // Normalize to 0–30 scale
         let normalized = (total / maxPossible) * 30.0
 
-        let confidence: Confidence
-        switch normalized {
-        case 21...: confidence = .perfect
-        case 19...: confidence = .veryHigh
-        case 17...: confidence = .high
-        case 15...: confidence = .prettyHigh
-        case 11...: confidence = .medium
-        case 8...:  confidence = .low
-        case 3...:  confidence = .veryLow
-        default:    confidence = .noMatch
+        let confidence: Confidence = switch normalized {
+        case 21...: .perfect
+        case 19...: .veryHigh
+        case 17...: .high
+        case 15...: .prettyHigh
+        case 11...: .medium
+        case 8...: .low
+        case 3...: .veryLow
+        default: .noMatch
         }
 
         return (normalized, confidence)
@@ -169,6 +168,6 @@ enum TrackMatcher {
     private static func bigrams(_ s: String) -> Set<String> {
         let chars = Array(s)
         guard chars.count >= 2 else { return Set([s]) }
-        return Set((0..<chars.count - 1).map { String(chars[$0...$0+1]) })
+        return Set((0 ..< chars.count - 1).map { String(chars[$0 ... $0 + 1]) })
     }
 }

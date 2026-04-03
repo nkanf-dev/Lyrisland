@@ -74,7 +74,10 @@ struct OnboardingView: View {
     private var welcomeStep: some View {
         VStack(alignment: .leading, spacing: 12) {
             stepTitle("How it works")
-            stepItem(icon: "desktopcomputer", text: "Reads playback info from the Spotify desktop app via macOS Automation — no account login needed.")
+            stepItem(
+                icon: "desktopcomputer",
+                text: "Reads playback info from the Spotify desktop app via macOS Automation — no account login needed."
+            )
             stepItem(icon: "text.quote", text: "Fetches synced lyrics from open sources (LRCLIB, Musixmatch, Soda Music).")
             stepItem(icon: "sparkles.rectangle.stack", text: "Displays lyrics in a floating Dynamic Island at the top of your screen.")
         }
@@ -130,6 +133,7 @@ struct OnboardingView: View {
             )
             stepItem(
                 icon: "hand.tap",
+                // swiftlint:disable:next line_length
                 text: "When prompted, click \"OK\" to grant Automation access. You can also enable it in System Settings → Privacy & Security → Automation."
             )
 
@@ -138,8 +142,8 @@ struct OnboardingView: View {
                     .fill(appState.permissionStatus == .granted ? .green : .orange)
                     .frame(width: 8, height: 8)
                 Text(appState.permissionStatus == .granted
-                     ? "Permission granted"
-                     : "Permission will be requested when Spotify is accessed")
+                    ? "Permission granted"
+                    : "Permission will be requested when Spotify is accessed")
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.6))
             }
@@ -204,33 +208,33 @@ struct OnboardingView: View {
 
     private func statusIcon(for status: AppState.SpotifyStatus) -> String {
         switch status {
-        case .notInstalled: return "xmark.circle.fill"
-        case .notRunning:   return "moon.circle.fill"
-        case .running:      return "checkmark.circle.fill"
+        case .notInstalled: "xmark.circle.fill"
+        case .notRunning: "moon.circle.fill"
+        case .running: "checkmark.circle.fill"
         }
     }
 
     private func statusColor(for status: AppState.SpotifyStatus) -> Color {
         switch status {
-        case .notInstalled: return .red
-        case .notRunning:   return .orange
-        case .running:      return .green
+        case .notInstalled: .red
+        case .notRunning: .orange
+        case .running: .green
         }
     }
 
     private func statusTitle(for status: AppState.SpotifyStatus) -> String {
         switch status {
-        case .notInstalled: return "Spotify not found"
-        case .notRunning:   return "Spotify is not running"
-        case .running:      return "Spotify is running"
+        case .notInstalled: "Spotify not found"
+        case .notRunning: "Spotify is not running"
+        case .running: "Spotify is running"
         }
     }
 
     private func statusSubtitle(for status: AppState.SpotifyStatus) -> String {
         switch status {
-        case .notInstalled: return "Please install the Spotify desktop app first."
-        case .notRunning:   return "Launch Spotify and play a song to get started."
-        case .running:      return "Ready to display lyrics!"
+        case .notInstalled: "Please install the Spotify desktop app first."
+        case .notRunning: "Launch Spotify and play a song to get started."
+        case .running: "Ready to display lyrics!"
         }
     }
 }

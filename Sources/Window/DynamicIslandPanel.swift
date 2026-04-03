@@ -3,7 +3,7 @@ import SwiftUI
 
 /// A borderless, always-on-top floating panel that mimics the iOS Dynamic Island.
 final class DynamicIslandPanel: NSPanel {
-    init<Content: View>(contentView: Content) {
+    init(contentView: some View) {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 350, height: 38),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -72,7 +72,7 @@ final class DynamicIslandPanel: NSPanel {
         setFrameOrigin(NSPoint(x: x, y: y))
     }
 
-    // Track mouse movement to distinguish clicks from drags
+    /// Track mouse movement to distinguish clicks from drags
     private var mouseDownOrigin: NSPoint?
 
     override func mouseDown(with event: NSEvent) {
@@ -92,8 +92,13 @@ final class DynamicIslandPanel: NSPanel {
         super.mouseUp(with: event)
     }
 
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeKey: Bool {
+        true
+    }
+
+    override var canBecomeMain: Bool {
+        false
+    }
 }
 
 extension Notification.Name {

@@ -13,7 +13,7 @@ struct IslandContentView: View {
                 .fill(.black)
 
             // Content based on state — `tick` dependency ensures periodic redraws
-            let _ = syncEngine.tick
+            let _ = syncEngine.tick // swiftlint:disable:this redundant_discardable_let
             switch islandState {
             case .compact:
                 CompactIslandView(syncEngine: syncEngine, lyricsManager: lyricsManager)
@@ -43,17 +43,17 @@ struct IslandContentView: View {
 
     static func size(for state: IslandState) -> NSSize {
         switch state {
-        case .compact:  return NSSize(width: 350, height: 38)
-        case .expanded: return NSSize(width: 380, height: 120)
-        case .full:     return NSSize(width: 400, height: 300)
+        case .compact: NSSize(width: 350, height: 38)
+        case .expanded: NSSize(width: 380, height: 120)
+        case .full: NSSize(width: 400, height: 300)
         }
     }
 
     private func cycleState() {
         switch islandState {
-        case .compact:  islandState = .expanded
+        case .compact: islandState = .expanded
         case .expanded: islandState = .full
-        case .full:     islandState = .compact
+        case .full: islandState = .compact
         }
     }
 

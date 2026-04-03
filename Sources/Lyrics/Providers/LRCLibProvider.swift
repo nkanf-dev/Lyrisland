@@ -31,7 +31,8 @@ struct LRCLibProvider: LyricsProvider {
         let (data, response) = try await URLSession.shared.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+              httpResponse.statusCode == 200
+        else {
             return nil
         }
 
@@ -50,13 +51,15 @@ struct LRCLibProvider: LyricsProvider {
         let (data, response) = try await URLSession.shared.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+              httpResponse.statusCode == 200
+        else {
             return nil
         }
 
         guard let results = try JSONSerialization.jsonObject(with: data) as? [[String: Any]],
               let first = results.first,
-              let resultData = try? JSONSerialization.data(withJSONObject: first) else {
+              let resultData = try? JSONSerialization.data(withJSONObject: first)
+        else {
             return nil
         }
 
@@ -67,7 +70,8 @@ struct LRCLibProvider: LyricsProvider {
 
     private func parseLRCLibResponse(_ data: Data) throws -> SyncedLyrics? {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let syncedLyrics = json["syncedLyrics"] as? String else {
+              let syncedLyrics = json["syncedLyrics"] as? String
+        else {
             return nil
         }
 

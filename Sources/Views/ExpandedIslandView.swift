@@ -38,6 +38,6 @@ struct ExpandedIslandView: View {
         let start = max(0, index - half)
         let end = min(total - 1, start + visibleLineCount - 1)
         let adjustedStart = max(0, end - visibleLineCount + 1)
-        return adjustedStart...end
+        return adjustedStart ... end
     }
 }

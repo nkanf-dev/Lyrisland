@@ -1,12 +1,12 @@
-import Foundation
 import Combine
+import Foundation
 
 /// Manages lyric fetching with provider fallback chain and caching.
 @MainActor
 final class LyricsManager: ObservableObject {
     @Published private(set) var currentLyrics: SyncedLyrics?
     @Published private(set) var isLoading = false
-    @Published var userOffset: TimeInterval = 0  // ± seconds, applied on top of globalOffset
+    @Published var userOffset: TimeInterval = 0 // ± seconds, applied on top of globalOffset
 
     /// Adjust user offset by a delta (e.g. +0.5 or -0.5 seconds).
     func adjustOffset(by delta: TimeInterval) {
@@ -34,9 +34,9 @@ final class LyricsManager: ObservableObject {
 
     /// Providers sorted by priority (lower = tried first).
     private let providers: [LyricsProvider] = [
-        LRCLibProvider(),        // 0 — open, free, no auth
-        MusixmatchProvider(),    // 1 — strong for Western music, richsync
-        SodaMusicProvider(),     // 2 — ByteDance, good for Chinese lyrics
+        LRCLibProvider(), // 0 — open, free, no auth
+        MusixmatchProvider(), // 1 — strong for Western music, richsync
+        SodaMusicProvider(), // 2 — ByteDance, good for Chinese lyrics
     ]
 
     /// In-memory cache keyed by track ID.

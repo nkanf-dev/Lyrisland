@@ -19,7 +19,16 @@ open ~/Library/Developer/Xcode/DerivedData/Lyrisland-*/Build/Products/Debug/Lyri
 
 **Important:** `xcodegen generate` overwrites `Lyrisland.entitlements` with values from `project.yml`'s `entitlements.properties`. Keep those in sync — don't hand-edit the entitlements file.
 
-No test targets, linting, or CI are configured yet.
+```bash
+# Lint & format
+swiftformat Sources        # auto-format
+swiftlint --fix Sources    # auto-fix lint issues
+swiftlint Sources          # check remaining warnings/errors
+```
+
+Both run automatically as Xcode pre-build scripts. Config: `.swiftlint.yml` and `.swiftformat`.
+
+**Caveat:** SwiftLint auto-fix changes `let _ =` to `_ =`, which breaks `@ViewBuilder` contexts. The `let _ = syncEngine.tick` pattern in `IslandContentView` uses an inline `swiftlint:disable` for this reason.
 
 ## Workflow
 

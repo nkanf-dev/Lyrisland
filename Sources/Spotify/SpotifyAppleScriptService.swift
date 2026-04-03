@@ -7,7 +7,7 @@ struct SpotifyPlaybackState {
     let artist: String
     let album: String
     let durationMs: Int
-    let position: TimeInterval   // seconds
+    let position: TimeInterval // seconds
     let isPlaying: Bool
 }
 

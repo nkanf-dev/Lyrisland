@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 
 /// Tracks the overall app readiness state for onboarding and status display.
 @MainActor
