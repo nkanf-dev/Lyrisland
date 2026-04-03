@@ -1,9 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "TrayIcon.pdf",
-      "idiom" : "mac",
-      "scale" : "1x"
+      "filename" : "TrayIcon.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

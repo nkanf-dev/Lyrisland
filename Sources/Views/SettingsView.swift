@@ -276,6 +276,7 @@ private struct AboutTab: View {
             Image(nsImage: NSImage(named: "AppIcon") ?? NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             Text("Lyrisland")
                 .font(.title2.bold())
