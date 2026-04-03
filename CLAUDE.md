@@ -21,6 +21,10 @@ open ~/Library/Developer/Xcode/DerivedData/Lyrisland-*/Build/Products/Debug/Lyri
 
 No test targets, linting, or CI are configured yet.
 
+## Workflow
+
+- Always update `CHANGELOG.md` under the `Unreleased` section when resolving an issue (bug fix or feature). Include the issue number (e.g. `#1`).
+
 ## Architecture
 
 LSUIElement menu bar app (no Dock icon). macOS 14.0+, Swift 5.10.
