@@ -273,7 +273,7 @@ private struct AboutTab: View {
         VStack(spacing: 12) {
             Spacer()
 
-            Image(nsImage: NSApp.applicationIconImage)
+            Image(nsImage: NSImage(named: "AppIcon") ?? NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 80, height: 80)
 
