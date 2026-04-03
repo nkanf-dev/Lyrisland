@@ -16,6 +16,9 @@ xcodebuild -project Lyrisland.xcodeproj -scheme Lyrisland -destination 'platform
 # Run the built app (use xcodebuild -showBuildSettings to find the correct DerivedData hash,
 # as there may be multiple Lyrisland-* directories; the glob may launch a stale build)
 open "$(xcodebuild -project Lyrisland.xcodeproj -scheme Lyrisland -showBuildSettings 2>/dev/null | grep -m1 'BUILT_PRODUCTS_DIR' | awk '{print $3}')/Lyrisland.app"
+
+# Test
+xcodebuild test -project Lyrisland.xcodeproj -scheme LyrislandTests -destination 'platform=macOS'
 ```
 
 **Important:** `xcodegen generate` overwrites `Lyrisland.entitlements` with values from `project.yml`'s `entitlements.properties`. Keep those in sync — don't hand-edit the entitlements file.
@@ -38,6 +41,7 @@ After cloning, run `prek install` to set up the git pre-commit hook.
 - Always update `CHANGELOG.md` under the `Unreleased` section when resolving an issue (bug fix or feature). Include the issue number (e.g. `#1`).
 - When a commit resolves a GitHub issue, the commit message **must** include `Fixes #<number>` (e.g. `Fixes #3`) so GitHub automatically closes the issue on push.
 - Use [Conventional Commits](https://www.conventionalcommits.org/) format: `<type>(<scope>): <description>`. Common types: `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `perf`, `test`. Example: `fix(lyrics): resolve long line truncation with marquee scrolling`.
+- New features and bug fixes that touch pure logic (parsers, matchers, models) should include unit tests in `Tests/` using **Swift Testing** (`import Testing`, `@Test`, `@Suite`). Run `xcodebuild test` to verify before committing.
 - After completing a coding task, use the **code-reviewer** agent (`pr-review-toolkit:code-reviewer`) to review the changes before committing.
 
 ## Architecture

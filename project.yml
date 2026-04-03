@@ -50,3 +50,15 @@ targets:
         com.apple.security.app-sandbox: false
         com.apple.security.automation.apple-events: true
         com.apple.security.network.client: true
+
+  LyrislandTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+    dependencies:
+      - target: Lyrisland
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wangjiyuan.LyrislandTests
+        GENERATE_INFOPLIST_FILE: true
