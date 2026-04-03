@@ -63,7 +63,7 @@ struct LRCLibProvider: LyricsProvider {
         return try parseLRCLibResponse(resultData)
     }
 
-    // MARK: - LRC Parsing
+    // MARK: - Response Parsing
 
     private func parseLRCLibResponse(_ data: Data) throws -> SyncedLyrics? {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -71,33 +71,8 @@ struct LRCLibProvider: LyricsProvider {
             return nil
         }
 
-        let lines = parseLRC(syncedLyrics)
+        let lines = LRCParser.parse(syncedLyrics)
         guard !lines.isEmpty else { return nil }
         return SyncedLyrics(lines: lines, source: name, globalOffset: 0)
-    }
-
-    /// Parse standard LRC format: [mm:ss.xx] text
-    private func parseLRC(_ raw: String) -> [LyricLine] {
-        let pattern = #"\[(\d{2}):(\d{2})\.(\d{2,3})\]\s*(.*)"#
-        let regex = try! NSRegularExpression(pattern: pattern)
-
-        var lines: [LyricLine] = []
-        for (index, line) in raw.components(separatedBy: .newlines).enumerated() {
-            let range = NSRange(line.startIndex..., in: line)
-            guard let match = regex.firstMatch(in: line, range: range) else { continue }
-
-            let minutes = Double(line[Range(match.range(at: 1), in: line)!])!
-            let seconds = Double(line[Range(match.range(at: 2), in: line)!])!
-            let msString = String(line[Range(match.range(at: 3), in: line)!])
-            let ms = Double(msString)! / (msString.count == 2 ? 100.0 : 1000.0)
-            let text = String(line[Range(match.range(at: 4), in: line)!])
-
-            guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { continue }
-
-            let time = minutes * 60 + seconds + ms
-            lines.append(LyricLine(id: index, time: time, text: text, translation: nil))
-        }
-
-        return lines.sorted { $0.time < $1.time }
     }
 }

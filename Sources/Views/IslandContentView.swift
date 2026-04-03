@@ -11,9 +11,9 @@ struct IslandContentView: View {
             // Background capsule
             RoundedRectangle(cornerRadius: islandState == .compact ? 20 : 24)
                 .fill(.black)
-                .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
 
-            // Content based on state
+            // Content based on state — `tick` dependency ensures periodic redraws
+            let _ = syncEngine.tick
             switch islandState {
             case .compact:
                 CompactIslandView(syncEngine: syncEngine, lyricsManager: lyricsManager)
@@ -28,21 +28,24 @@ struct IslandContentView: View {
         .onTapGesture {
             cycleState()
         }
-    }
-
-    private var widthForState: CGFloat {
-        switch islandState {
-        case .compact:  return 350
-        case .expanded: return 380
-        case .full:     return 400
+        .onChange(of: islandState) { _, newState in
+            resizePanel(for: newState)
         }
     }
 
+    private var widthForState: CGFloat {
+        Self.size(for: islandState).width
+    }
+
     private var heightForState: CGFloat {
-        switch islandState {
-        case .compact:  return 38
-        case .expanded: return 120
-        case .full:     return 300
+        Self.size(for: islandState).height
+    }
+
+    static func size(for state: IslandState) -> NSSize {
+        switch state {
+        case .compact:  return NSSize(width: 350, height: 38)
+        case .expanded: return NSSize(width: 380, height: 120)
+        case .full:     return NSSize(width: 400, height: 300)
         }
     }
 
@@ -52,5 +55,10 @@ struct IslandContentView: View {
         case .expanded: islandState = .full
         case .full:     islandState = .compact
         }
+    }
+
+    private func resizePanel(for state: IslandState) {
+        guard let window = NSApp.windows.first(where: { $0 is DynamicIslandPanel }) as? DynamicIslandPanel else { return }
+        window.animateResize(to: Self.size(for: state))
     }
 }

@@ -10,7 +10,7 @@ struct ExpandedIslandView: View {
     var body: some View {
         VStack(spacing: 4) {
             if let lyrics = lyricsManager.currentLyrics {
-                let currentIdx = lyrics.lineIndex(at: syncEngine.interpolatedPosition) ?? 0
+                let currentIdx = lyrics.lineIndex(at: syncEngine.position) ?? 0
                 let range = contextRange(around: currentIdx, total: lyrics.lines.count)
 
                 ForEach(lyrics.lines[range]) { line in
@@ -30,7 +30,7 @@ struct ExpandedIslandView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .animation(.easeInOut(duration: 0.25), value: lyricsManager.currentLyrics?.lineIndex(at: syncEngine.interpolatedPosition))
+        .animation(.easeInOut(duration: 0.25), value: lyricsManager.currentLyrics?.lineIndex(at: syncEngine.position))
     }
 
     private func contextRange(around index: Int, total: Int) -> ClosedRange<Int> {

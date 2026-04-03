@@ -6,11 +6,37 @@ import Combine
 final class LyricsManager: ObservableObject {
     @Published private(set) var currentLyrics: SyncedLyrics?
     @Published private(set) var isLoading = false
+    @Published var userOffset: TimeInterval = 0  // ± seconds, applied on top of globalOffset
+
+    /// Adjust user offset by a delta (e.g. +0.5 or -0.5 seconds).
+    func adjustOffset(by delta: TimeInterval) {
+        userOffset += delta
+        // Rebuild current lyrics with updated offset
+        if let lyrics = currentLyrics {
+            currentLyrics = SyncedLyrics(
+                lines: lyrics.lines,
+                source: lyrics.source,
+                globalOffset: lyrics.globalOffset + delta
+            )
+        }
+    }
+
+    func resetOffset() {
+        if let lyrics = currentLyrics {
+            currentLyrics = SyncedLyrics(
+                lines: lyrics.lines,
+                source: lyrics.source,
+                globalOffset: lyrics.globalOffset - userOffset
+            )
+        }
+        userOffset = 0
+    }
 
     /// Providers sorted by priority (lower = tried first).
     private let providers: [LyricsProvider] = [
-        LRCLibProvider(),
-        // Add more providers here — they will be tried in priority order.
+        LRCLibProvider(),        // 0 — open, free, no auth
+        MusixmatchProvider(),    // 1 — strong for Western music, richsync
+        SodaMusicProvider(),     // 2 — ByteDance, good for Chinese lyrics
     ]
 
     /// In-memory cache keyed by track ID.

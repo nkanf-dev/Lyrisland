@@ -5,19 +5,65 @@ import Combine
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var islandPanel: DynamicIslandPanel?
+    private var onboardingWindow: NSWindow?
     private var statusItem: NSStatusItem?
     private let spotifyService = SpotifyAppleScriptService()
     private let lyricsManager = LyricsManager()
     private let syncEngine = PlaybackSyncEngine()
+    private let appState = AppState()
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
+
+        if appState.hasCompletedOnboarding {
+            launchMainUI()
+        } else {
+            showOnboarding()
+        }
+    }
+
+    // MARK: - Onboarding
+
+    private func showOnboarding() {
+        appState.refresh()
+
+        let onboardingView = OnboardingView(appState: appState) { [weak self] in
+            self?.onboardingWindow?.close()
+            self?.onboardingWindow = nil
+            self?.launchMainUI()
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 480),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.center()
+        window.title = "Welcome to SpotifyLyricBar"
+        window.contentView = NSHostingView(rootView: onboardingView)
+        window.isReleasedWhenClosed = false
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = NSColor(white: 0.1, alpha: 1)
+        window.makeKeyAndOrderFront(nil)
+
+        // Bring app to front for onboarding
+        NSApp.activate(ignoringOtherApps: true)
+
+        onboardingWindow = window
+    }
+
+    private func launchMainUI() {
         setupIslandPanel()
         startPlaybackMonitoring()
     }
 
     // MARK: - Menu Bar
+
+    private var trackMenuItem: NSMenuItem?
+    private var sourceMenuItem: NSMenuItem?
+    private var offsetMenuItem: NSMenuItem?
 
     private func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -26,10 +72,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
+
+        // Now playing info (disabled, just for display)
+        trackMenuItem = NSMenuItem(title: "No track playing", action: nil, keyEquivalent: "")
+        trackMenuItem?.isEnabled = false
+        menu.addItem(trackMenuItem!)
+
+        sourceMenuItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        sourceMenuItem?.isEnabled = false
+        sourceMenuItem?.isHidden = true
+        menu.addItem(sourceMenuItem!)
+
+        menu.addItem(.separator())
+
         menu.addItem(NSMenuItem(title: "Show/Hide Lyrics", action: #selector(toggleIsland), keyEquivalent: "l"))
+
+        menu.addItem(.separator())
+
+        // Offset controls
+        let offsetHeader = NSMenuItem(title: "Lyrics Offset", action: nil, keyEquivalent: "")
+        offsetHeader.isEnabled = false
+        menu.addItem(offsetHeader)
+
+        offsetMenuItem = NSMenuItem(title: "Offset: 0.0s", action: nil, keyEquivalent: "")
+        offsetMenuItem?.isEnabled = false
+        menu.addItem(offsetMenuItem!)
+
+        menu.addItem(NSMenuItem(title: "Earlier (-0.5s)", action: #selector(offsetEarlier), keyEquivalent: "["))
+        menu.addItem(NSMenuItem(title: "Later (+0.5s)", action: #selector(offsetLater), keyEquivalent: "]"))
+        menu.addItem(NSMenuItem(title: "Reset Offset", action: #selector(offsetReset), keyEquivalent: "0"))
+
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
+
         statusItem?.menu = menu
+    }
+
+    private func updateMenuInfo() {
+        if let state = spotifyService.fetchPlaybackState() {
+            trackMenuItem?.title = "\(state.title) — \(state.artist)"
+        } else {
+            trackMenuItem?.title = "No track playing"
+        }
+
+        if let source = lyricsManager.currentLyrics?.source {
+            sourceMenuItem?.title = "Source: \(source)"
+            sourceMenuItem?.isHidden = false
+        } else {
+            sourceMenuItem?.isHidden = true
+        }
+
+        let offset = lyricsManager.userOffset
+        offsetMenuItem?.title = String(format: "Offset: %+.1fs", offset)
     }
 
     // MARK: - Island Panel
@@ -45,29 +139,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Playback Monitoring
 
+    private enum PollRate: TimeInterval {
+        case playing = 0.2    // 200ms — smooth sync
+        case paused = 1.0     // 1s — just watch for resume
+        case notRunning = 3.0 // 3s — check if Spotify launched
+    }
+
+    private var pollTimer: Timer?
+    private var currentPollRate: PollRate = .notRunning
+
     private func startPlaybackMonitoring() {
-        // Poll Spotify via AppleScript every 200ms for playback position
-        Timer.publish(every: 0.2, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                self?.pollSpotify()
-            }
-            .store(in: &cancellables)
+        setPollRate(.playing)
+    }
+
+    private func setPollRate(_ rate: PollRate) {
+        guard rate != currentPollRate else { return }
+        currentPollRate = rate
+        pollTimer?.invalidate()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: rate.rawValue, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.pollSpotify() }
+        }
+        RunLoop.main.add(pollTimer!, forMode: .common)
     }
 
     private var lastTrackId: String?
+    private var pollCount: Int = 0
 
     private func pollSpotify() {
         guard let state = spotifyService.fetchPlaybackState() else {
             syncEngine.calibrate(position: 0, isPlaying: false)
+            setPollRate(.notRunning)
             return
         }
 
         syncEngine.calibrate(position: state.position, isPlaying: state.isPlaying)
+        setPollRate(state.isPlaying ? .playing : .paused)
 
         // Track changed → fetch new lyrics
-        if state.trackId != lastTrackId {
+        let trackChanged = state.trackId != lastTrackId
+        if trackChanged {
             lastTrackId = state.trackId
+            lyricsManager.resetOffset()
             Task {
                 let track = TrackInfo(
                     id: state.trackId,
@@ -77,7 +189,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     durationMs: state.durationMs
                 )
                 await lyricsManager.loadLyrics(for: track)
+                updateMenuInfo()
             }
+        }
+
+        // Refresh menu bar info periodically (every ~1s when playing)
+        pollCount += 1
+        if trackChanged || pollCount % 5 == 0 {
+            updateMenuInfo()
         }
     }
 
@@ -89,6 +208,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             islandPanel?.orderFrontRegardless()
         }
+    }
+
+    @objc private func offsetEarlier() {
+        lyricsManager.adjustOffset(by: -0.5)
+        updateMenuInfo()
+    }
+
+    @objc private func offsetLater() {
+        lyricsManager.adjustOffset(by: 0.5)
+        updateMenuInfo()
+    }
+
+    @objc private func offsetReset() {
+        lyricsManager.resetOffset()
+        updateMenuInfo()
     }
 
     @objc private func quitApp() {

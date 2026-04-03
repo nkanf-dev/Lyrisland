@@ -26,3 +26,7 @@ targets:
         ENABLE_HARDENED_RUNTIME: true
     entitlements:
       path: Sources/App/SpotifyLyricBar.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.automation.apple-events: true
+        com.apple.security.network.client: true
