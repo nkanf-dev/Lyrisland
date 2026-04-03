@@ -46,10 +46,12 @@ final class LyricsManager: ObservableObject {
     func loadLyrics(for track: TrackInfo) async {
         // Check cache
         if let cached = cache[track.id] {
+            logDebug("Lyrics cache hit for: \(track.title) — \(track.artist)")
             currentLyrics = cached
             return
         }
 
+        logInfo("Loading lyrics for: \(track.title) — \(track.artist)")
         isLoading = true
         defer { isLoading = false }
 
@@ -57,17 +59,19 @@ final class LyricsManager: ObservableObject {
         for provider in providers.sorted(by: { $0.priority < $1.priority }) {
             do {
                 if let lyrics = try await provider.fetchLyrics(for: track) {
+                    logInfo("Lyrics found via \(provider.name) for: \(track.title)")
                     cache[track.id] = lyrics
                     currentLyrics = lyrics
                     return
                 }
             } catch {
-                // Provider failed — try next
+                logWarning("Provider \(provider.name) failed for \(track.title): \(error.localizedDescription)")
                 continue
             }
         }
 
         // No provider returned lyrics
+        logWarning("No lyrics found for: \(track.title) — \(track.artist)")
         currentLyrics = nil
     }
 

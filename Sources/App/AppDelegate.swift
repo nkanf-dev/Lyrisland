@@ -14,6 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_: Notification) {
+        Log.shared.cleanupOldLogs()
+        logInfo("Lyrisland launched")
+
         setupMenuBar()
 
         if appState.hasCompletedOnboarding {
@@ -21,6 +24,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             showOnboarding()
         }
+    }
+
+    func applicationWillTerminate(_: Notification) {
+        logInfo("Lyrisland terminating")
+        Log.shared.flush()
     }
 
     // MARK: - Onboarding

@@ -38,6 +38,10 @@ final class SpotifyAppleScriptService {
         var error: NSDictionary?
         let result = appleScript.executeAndReturnError(&error)
 
+        if let error {
+            logDebug("AppleScript execution failed: \(error)")
+        }
+
         guard error == nil, let raw = result.stringValue, raw != "NOT_RUNNING" else {
             return nil
         }

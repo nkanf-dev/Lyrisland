@@ -4,6 +4,7 @@
 
 ### Added
 
+- 统一日志系统：支持 debug/info/warning/error 级别，按日轮转写入 `~/Library/Logs/Lyrisland/`，启动时自动清理 30 天前日志，同时转发至 os.Logger（Console.app 可查看）(#9)
 - 灵动岛显示专辑封面：Compact 状态显示小缩略图，Expanded 状态左侧显示中等封面，Full 状态左侧显示大封面配合歌词滚动 (#8)
 - 双行歌词显示模式（卡拉OK风格），同时显示当前行和下一行歌词，可通过菜单栏 ⌘D 切换 (#6)
 - 新增网易云音乐歌词源（NeteaseProvider），Fallback 链扩展为 LRCLIB → Musixmatch → SodaMusic → Netease (#4)
