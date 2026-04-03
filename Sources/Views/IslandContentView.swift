@@ -96,18 +96,38 @@ struct IslandContentView: View {
             ArtworkView(trackId: syncEngine.currentTrackId, artworkURL: syncEngine.artworkURL, size: artworkSize)
                 .padding(.top, islandState == .full ? 8 : 0)
 
-            if islandState == .full, let source = lyricsManager.currentLyrics?.source {
-                Text(source)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.3))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(.white.opacity(0.08)))
-                    .padding(.top, 4)
-            }
-
             if islandState == .full {
-                Spacer(minLength: 0)
+                if let source = lyricsManager.currentLyrics?.source {
+                    Text(source)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.3))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(.white.opacity(0.08)))
+                        .padding(.top, 4)
+                }
+
+                // Track info
+                VStack(spacing: 2) {
+                    if let title = syncEngine.trackTitle {
+                        Text(title)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.8))
+                            .lineLimit(1)
+                    }
+                    if let artist = syncEngine.trackArtist {
+                        Text(artist)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .lineLimit(1)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 6)
+
+                // Remaining space: controls centered within it
+                PlaybackControlsView(syncEngine: syncEngine)
+                    .frame(maxHeight: .infinity)
             }
         }
     }
@@ -115,7 +135,7 @@ struct IslandContentView: View {
     private var artworkSize: CGFloat {
         switch islandState {
         case .compact: 36
-        case .expanded: 128
+        case .expanded: 110
         case .full: 200
         }
     }
@@ -127,7 +147,7 @@ struct IslandContentView: View {
         case .expanded:
             EdgeInsets(top: 12, leading: 10, bottom: 12, trailing: 10)
         case .full:
-            EdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 0)
+            EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 0)
         }
     }
 
@@ -146,8 +166,8 @@ struct IslandContentView: View {
     static func contentHeight(for state: IslandState, dualLine: Bool = false, artwork: Bool = true) -> CGFloat {
         switch state {
         case .compact: dualLine ? 62 : artwork ? 48 : 38
-        case .expanded: artwork ? 160 : 120
-        case .full: artwork ? 340 : 300
+        case .expanded: artwork ? 140 : 120
+        case .full: artwork ? 340 : 340
         }
     }
 
