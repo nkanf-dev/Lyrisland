@@ -36,6 +36,7 @@ After cloning, run `prek install` to set up the git pre-commit hook.
 
 - Always update `CHANGELOG.md` under the `Unreleased` section when resolving an issue (bug fix or feature). Include the issue number (e.g. `#1`).
 - When a commit resolves a GitHub issue, the commit message **must** include `Fixes #<number>` (e.g. `Fixes #3`) so GitHub automatically closes the issue on push.
+- Use [Conventional Commits](https://www.conventionalcommits.org/) format: `<type>(<scope>): <description>`. Common types: `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `perf`, `test`. Example: `fix(lyrics): resolve long line truncation with marquee scrolling`.
 
 ## Architecture
 
