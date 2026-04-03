@@ -2,6 +2,10 @@
 
 ## 0.2.0 — 2026-04-04
 
+### Fixed
+
+- Detached + Expanded 模式下灵动岛圆角显示不完全、内容溢出裁剪区域的问题，通过将 vertical padding 纳入 detached 面板高度计算并约束 SwiftUI frame 与 NSPanel 尺寸对齐 (#61)
+
 ### Added
 
 - 拖拽灵动岛接近菜单栏吸附区域时显示视觉反馈：形状预览切换为吸附样式、边框高亮、白色发光阴影，并触发 haptic 对齐反馈；离开区域后自动恢复 (#62)
