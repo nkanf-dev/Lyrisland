@@ -37,6 +37,7 @@ final class LyricsManager: ObservableObject {
         LRCLibProvider(), // 0 — open, free, no auth
         MusixmatchProvider(), // 1 — strong for Western music, richsync
         SodaMusicProvider(), // 2 — ByteDance, good for Chinese lyrics
+        NeteaseProvider(), // 3 — Netease Cloud Music, strong for Chinese/Asian music
     ]
 
     /// In-memory cache keyed by track ID.

@@ -4,6 +4,7 @@
 
 ### Added
 
+- 新增网易云音乐歌词源（NeteaseProvider），Fallback 链扩展为 LRCLIB → Musixmatch → SodaMusic → Netease (#4)
 - 国际化支持（i18n），使用 String Catalog（.xcstrings）
 - 简体中文翻译（Onboarding、菜单栏、歌词状态提示）
 
