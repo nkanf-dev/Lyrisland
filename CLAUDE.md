@@ -34,7 +34,7 @@ Both run automatically as Xcode pre-build scripts and as pre-commit hooks via [p
 
 After cloning, run `prek install` to set up the git pre-commit hook.
 
-**Caveat:** SwiftLint auto-fix changes `let _ =` to `_ =`, which breaks `@ViewBuilder` contexts. The `let _ = syncEngine.tick` pattern in `IslandContentView` uses an inline `swiftlint:disable` for this reason.
+**Caveat:** SwiftLint auto-fix changes `let _ =` to `_ =`, which breaks `@ViewBuilder` contexts. If you ever need `let _ =` in a `@ViewBuilder`, add an inline `swiftlint:disable` comment.
 
 ## Workflow
 
@@ -54,8 +54,8 @@ LSUIElement menu bar app (no Dock icon). macOS 14.0+, Swift 5.10.
 AppleScript poll (adaptive: 200ms/1s/3s)
     → SpotifyAppleScriptService → SpotifyPlaybackState
     → PlaybackSyncEngine.calibrate() → anchor point
-    → 30fps tick timer → interpolated position
-    → SwiftUI views read syncEngine.position driven by syncEngine.tick
+    → 30fps tick timer → interpolated position + cached currentLineIndex
+    → SwiftUI views react to @Published currentLineIndex changes
 
 Track change → LyricsManager.loadLyrics()
     → Provider fallback chain (LRCLIB → Musixmatch → SodaMusic)
@@ -65,7 +65,7 @@ Track change → LyricsManager.loadLyrics()
 ### Key Design Decisions
 
 - **AppleScript for playback state** (not Spotify Web API) — no OAuth needed, low-latency, works offline. Trade-off: requires Automation permission and desktop Spotify client.
-- **Anchor + interpolation model** — AppleScript gives position every 200ms; between polls, `PlaybackSyncEngine` linearly extrapolates at 30fps via a Timer-driven `tick` counter. Views depend on the `@Published tick` to trigger redraws.
+- **Anchor + interpolation model** — AppleScript gives position every 200ms; between polls, `PlaybackSyncEngine` linearly extrapolates at 30fps via a Timer-driven `tick` counter. The tick updates an internal `position` and a `@Published currentLineIndex` — views only rebuild when the current lyric line actually changes, not every frame.
 - **Transparent floating window** — `NSPanel` with `hasShadow=false`, `backgroundColor=.clear`, `isOpaque=false`. The `NSHostingView` is wrapped in a plain `NSView` container, and `sceneBridgingOptions = []` (macOS 14+) disables SwiftUI's automatic window background. All three layers are necessary — removing any one brings back the black rectangle.
 - **Adaptive polling** — `PollRate` enum in AppDelegate: `.playing` (200ms), `.paused` (1s), `.notRunning` (3s). PlaybackSyncEngine also stops its tick timer when paused.
 

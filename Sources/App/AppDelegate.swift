@@ -141,8 +141,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem?.menu = menu
     }
 
-    private func updateMenuInfo() {
-        if let state = spotifyService.fetchPlaybackState() {
+    private func updateMenuInfo(state: SpotifyPlaybackState? = nil) {
+        if let state {
             trackMenuItem?.title = "\(state.title) — \(state.artist)"
         } else {
             trackMenuItem?.title = String(localized: "menu.no_track")
@@ -212,23 +212,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pollCount: Int = 0
 
     private func pollSpotify() {
-        guard let state = spotifyService.fetchPlaybackState() else {
-            syncEngine.calibrate(position: 0, isPlaying: false)
-            setPollRate(.notRunning)
-            return
-        }
+        Task {
+            guard let state = await spotifyService.fetchPlaybackState() else {
+                syncEngine.calibrate(position: 0, isPlaying: false)
+                setPollRate(.notRunning)
+                return
+            }
 
-        syncEngine.calibrate(position: state.position, isPlaying: state.isPlaying)
-        syncEngine.setTrackId(state.trackId)
-        syncEngine.setArtworkURL(state.artworkURL)
-        setPollRate(state.isPlaying ? .playing : .paused)
+            syncEngine.calibrate(position: state.position, isPlaying: state.isPlaying)
+            syncEngine.setTrackId(state.trackId)
+            syncEngine.setArtworkURL(state.artworkURL)
+            setPollRate(state.isPlaying ? .playing : .paused)
 
-        // Track changed → fetch new lyrics
-        let trackChanged = state.trackId != lastTrackId
-        if trackChanged {
-            lastTrackId = state.trackId
-            lyricsManager.resetOffset()
-            Task {
+            // Track changed → fetch new lyrics
+            let trackChanged = state.trackId != lastTrackId
+            if trackChanged {
+                lastTrackId = state.trackId
+                lyricsManager.resetOffset()
                 let track = TrackInfo(
                     id: state.trackId,
                     title: state.title,
@@ -237,14 +237,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     durationMs: state.durationMs
                 )
                 await lyricsManager.loadLyrics(for: track)
-                updateMenuInfo()
             }
-        }
 
-        // Refresh menu bar info periodically (every ~1s when playing)
-        pollCount += 1
-        if trackChanged || pollCount % 5 == 0 {
-            updateMenuInfo()
+            // Refresh menu bar info periodically (every ~1s when playing)
+            pollCount += 1
+            if trackChanged || pollCount % 5 == 0 {
+                updateMenuInfo(state: state)
+            }
         }
     }
 

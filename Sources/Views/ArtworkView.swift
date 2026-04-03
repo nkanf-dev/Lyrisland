@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Displays album artwork with two-tier caching (memory + disk), keyed by track ID.
 struct ArtworkView: View {
-    @ObservedObject var syncEngine: PlaybackSyncEngine
+    let trackId: String?
+    let artworkURL: URL?
     let size: CGFloat
 
     @State private var image: NSImage?
@@ -21,14 +22,14 @@ struct ArtworkView: View {
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: size * 0.15))
-        .task(id: syncEngine.currentTrackId) {
+        .task(id: trackId) {
             await loadImage()
         }
     }
 
     private func loadImage() async {
-        guard let trackId = syncEngine.currentTrackId,
-              let url = syncEngine.artworkURL
+        guard let trackId,
+              let url = artworkURL
         else {
             image = nil
             return

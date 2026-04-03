@@ -11,7 +11,7 @@ struct FullIslandView: View {
             // Album artwork on the left
             if appState.showArtwork {
                 VStack {
-                    ArtworkView(syncEngine: syncEngine, size: 200)
+                    ArtworkView(trackId: syncEngine.currentTrackId, artworkURL: syncEngine.artworkURL, size: 200)
                         .padding(.top, 8)
 
                     // Source badge below artwork
@@ -33,7 +33,7 @@ struct FullIslandView: View {
             // Lyrics on the right
             VStack(spacing: 0) {
                 if let lyrics = lyricsManager.currentLyrics {
-                    LyricsScrollView(lyrics: lyrics, syncEngine: syncEngine)
+                    LyricsScrollView(lyrics: lyrics, currentLineIndex: syncEngine.currentLineIndex ?? 0)
                 } else if lyricsManager.isLoading {
                     Spacer()
                     ProgressView()

@@ -32,8 +32,20 @@ final class SpotifyAppleScriptService {
     end if
     """
 
-    func fetchPlaybackState() -> SpotifyPlaybackState? {
-        guard let appleScript = NSAppleScript(source: script) else { return nil }
+    private let queue = DispatchQueue(label: "com.lyrisland.applescript", qos: .userInitiated)
+
+    func fetchPlaybackState() async -> SpotifyPlaybackState? {
+        await withCheckedContinuation { continuation in
+            queue.async { [script] in
+                let result = Self.executeScript(script)
+                continuation.resume(returning: result)
+            }
+        }
+    }
+
+    /// Synchronous execution on the caller's thread — use only from background context.
+    private static func executeScript(_ source: String) -> SpotifyPlaybackState? {
+        guard let appleScript = NSAppleScript(source: source) else { return nil }
 
         var error: NSDictionary?
         let result = appleScript.executeAndReturnError(&error)

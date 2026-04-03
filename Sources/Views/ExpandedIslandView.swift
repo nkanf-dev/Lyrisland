@@ -13,7 +13,7 @@ struct ExpandedIslandView: View {
         HStack(spacing: 10) {
             // Album artwork
             if appState.showArtwork {
-                ArtworkView(syncEngine: syncEngine, size: 128)
+                ArtworkView(trackId: syncEngine.currentTrackId, artworkURL: syncEngine.artworkURL, size: 128)
                     .padding(.leading, 10)
             }
 

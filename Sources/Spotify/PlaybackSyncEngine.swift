@@ -13,9 +13,10 @@ final class PlaybackSyncEngine: ObservableObject {
     @Published private(set) var currentTrackId: String?
     @Published private(set) var artworkURL: URL?
 
-    /// Monotonically incrementing tick that drives SwiftUI redraws.
-    /// Views read `position` inside a body that depends on `tick`.
-    @Published private(set) var tick: UInt64 = 0
+    /// Monotonically incrementing tick used internally to update position.
+    /// NOT @Published — views should depend on `currentLineIndex` or other
+    /// published properties instead of rebuilding every frame.
+    private(set) var tick: UInt64 = 0
 
     /// Cached current line index — only published when it actually changes,
     /// so views that only care about line identity don't redraw every tick.
@@ -44,11 +45,10 @@ final class PlaybackSyncEngine: ObservableObject {
     /// Called by the AppleScript polling timer.
     func calibrate(position: TimeInterval, isPlaying: Bool) {
         anchor = (Date(), position)
-        let wasPlaying = self.isPlaying
-        self.isPlaying = isPlaying
 
-        // Adjust tick rate when play state changes
-        if wasPlaying != isPlaying {
+        // Only publish when play state actually changes to avoid unnecessary view rebuilds
+        if self.isPlaying != isPlaying {
+            self.isPlaying = isPlaying
             startTickTimer()
         }
     }
@@ -78,8 +78,8 @@ final class PlaybackSyncEngine: ObservableObject {
     // MARK: - Tick Timer
 
     /// Use a Timer on the main run loop at ~30 fps when playing, paused when not.
-    /// Each tick updates `position` and bumps the published `tick` counter,
-    /// which triggers SwiftUI to re-evaluate views that read `position`.
+    /// Each tick updates `position` and the cached `currentLineIndex`.
+    /// Only `currentLineIndex` is @Published, so views update only on line changes.
     private func startTickTimer() {
         tickTimer?.invalidate()
 

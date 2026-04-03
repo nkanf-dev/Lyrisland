@@ -2,8 +2,8 @@ import SwiftUI
 
 /// The root view hosted inside the DynamicIslandPanel.
 struct IslandContentView: View {
-    @ObservedObject var syncEngine: PlaybackSyncEngine
-    @ObservedObject var lyricsManager: LyricsManager
+    var syncEngine: PlaybackSyncEngine
+    var lyricsManager: LyricsManager
     @ObservedObject var appState: AppState
     @State private var islandState: IslandState = .compact
     @State private var isAttached: Bool = UserDefaults.standard.islandPositionMode == .attached
@@ -33,9 +33,7 @@ struct IslandContentView: View {
                     )
             }
 
-            // Content based on state — `tick` dependency ensures periodic redraws
             // In attached mode, content is aligned to the bottom so it appears below the menu bar
-            let _ = syncEngine.tick // swiftlint:disable:this redundant_discardable_let
             Group {
                 switch islandState {
                 case .compact:

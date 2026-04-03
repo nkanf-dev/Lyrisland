@@ -11,7 +11,7 @@ struct CompactIslandView: View {
         HStack(spacing: 10) {
             // Album artwork thumbnail
             if appState.showArtwork {
-                ArtworkView(syncEngine: syncEngine, size: 36)
+                ArtworkView(trackId: syncEngine.currentTrackId, artworkURL: syncEngine.artworkURL, size: 36)
             }
 
             // Playing indicator bars
@@ -55,7 +55,7 @@ struct CompactIslandView: View {
     }
 
     private var statusIcon: String {
-        if !syncEngine.isPlaying, syncEngine.position == 0 {
+        if !syncEngine.isPlaying, syncEngine.currentTrackId == nil {
             return "antenna.radiowaves.left.and.right.slash" // Not connected
         }
         return "pause.fill"

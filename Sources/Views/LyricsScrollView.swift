@@ -1,13 +1,10 @@
 import SwiftUI
 
 /// Auto-scrolling lyrics list that tracks the current playback position.
+/// Only re-renders when the current line index changes, not on every tick.
 struct LyricsScrollView: View {
     let lyrics: SyncedLyrics
-    @ObservedObject var syncEngine: PlaybackSyncEngine
-
-    private var currentIndex: Int {
-        syncEngine.currentLineIndex ?? 0
-    }
+    let currentLineIndex: Int
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -16,23 +13,12 @@ struct LyricsScrollView: View {
                     Spacer(minLength: 40)
 
                     ForEach(lyrics.lines) { line in
-                        let isCurrent = line.id == currentIndex
-
-                        VStack(spacing: 2) {
-                            Text(line.text)
-                                .font(.system(size: isCurrent ? 15 : 12, weight: isCurrent ? .bold : .regular))
-                                .foregroundStyle(isCurrent ? .white : .white.opacity(0.35))
-                                .blur(radius: blurAmount(for: line.id))
-                                .scaleEffect(isCurrent ? 1.0 : 0.95)
-
-                            if let translation = line.translation {
-                                Text(translation)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(isCurrent ? .white.opacity(0.7) : .white.opacity(0.2))
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .animation(.smooth(duration: 0.35), value: isCurrent)
+                        LyricLineRow(
+                            text: line.text,
+                            translation: line.translation,
+                            isCurrent: line.id == currentLineIndex,
+                            distance: abs(line.id - currentLineIndex)
+                        )
                         .id(line.id)
                     }
 
@@ -40,16 +26,42 @@ struct LyricsScrollView: View {
                 }
                 .padding(.horizontal, 20)
             }
-            .onChange(of: currentIndex) { _, newIdx in
+            .onChange(of: currentLineIndex) { _, newIdx in
                 withAnimation(.easeInOut(duration: 0.3)) {
                     proxy.scrollTo(newIdx, anchor: .center)
                 }
             }
         }
     }
+}
 
-    private func blurAmount(for lineId: Int) -> CGFloat {
-        let distance = abs(lineId - currentIndex)
+/// Individual lyric line — Equatable so SwiftUI skips body evaluation
+/// when this line's state hasn't changed (only ~2 lines change per index shift).
+private struct LyricLineRow: View, Equatable {
+    let text: String
+    let translation: String?
+    let isCurrent: Bool
+    let distance: Int
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(text)
+                .font(.system(size: isCurrent ? 15 : 12, weight: isCurrent ? .bold : .regular))
+                .foregroundStyle(isCurrent ? .white : .white.opacity(0.35))
+                .blur(radius: blurAmount)
+                .scaleEffect(isCurrent ? 1.0 : 0.95)
+
+            if let translation {
+                Text(translation)
+                    .font(.system(size: 11))
+                    .foregroundStyle(isCurrent ? .white.opacity(0.7) : .white.opacity(0.2))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .animation(.smooth(duration: 0.35), value: isCurrent)
+    }
+
+    private var blurAmount: CGFloat {
         if distance == 0 { return 0 }
         if distance <= 2 { return 0.3 }
         return 0.8
