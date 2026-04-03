@@ -23,6 +23,7 @@ struct LyricsScrollView: View {
                                 .font(.system(size: isCurrent ? 15 : 12, weight: isCurrent ? .bold : .regular))
                                 .foregroundStyle(isCurrent ? .white : .white.opacity(0.35))
                                 .blur(radius: blurAmount(for: line.id))
+                                .scaleEffect(isCurrent ? 1.0 : 0.95)
 
                             if let translation = line.translation {
                                 Text(translation)
@@ -31,6 +32,7 @@ struct LyricsScrollView: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .animation(.smooth(duration: 0.35), value: isCurrent)
                         .id(line.id)
                     }
 

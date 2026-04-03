@@ -23,6 +23,7 @@ struct ExpandedIslandView: View {
                         )
                         .frame(height: 20)
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
                     } else {
                         Text(line.text)
                             .font(.system(size: 12))
@@ -30,6 +31,7 @@ struct ExpandedIslandView: View {
                             .lineLimit(1)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .blur(radius: 0.5)
+                            .transition(.opacity.combined(with: .scale(scale: 1.05)))
                     }
                 }
             } else {
@@ -40,7 +42,7 @@ struct ExpandedIslandView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .animation(.easeInOut(duration: 0.25), value: lyricsManager.currentLyrics?.lineIndex(at: syncEngine.position))
+        .animation(.smooth(duration: 0.35), value: lyricsManager.currentLyrics?.lineIndex(at: syncEngine.position))
     }
 
     private func contextRange(around index: Int, total: Int) -> ClosedRange<Int> {

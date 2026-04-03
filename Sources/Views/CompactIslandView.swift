@@ -23,8 +23,9 @@ struct CompactIslandView: View {
                 font: .system(size: 13, weight: .medium),
                 color: displayTextOpacity
             )
-            .transition(.push(from: .bottom))
+            .transition(.push(from: .bottom).combined(with: .opacity))
             .id(currentLineId)
+            .animation(.smooth(duration: 0.35), value: currentLineId)
         }
         .padding(.horizontal, 16)
     }
