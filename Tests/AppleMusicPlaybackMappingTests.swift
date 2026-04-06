@@ -31,4 +31,64 @@ struct AppleMusicPlaybackMappingTests {
         #expect(snapshot?.isPlaying == false)
         #expect(snapshot?.durationMs == 200_000)
     }
+
+    @Test("artwork lookup request includes artist and album metadata")
+    func artworkLookupRequestIncludesMetadata() {
+        let snapshot = PlaybackSnapshot(
+            player: .appleMusic,
+            trackId: "music-track",
+            title: "Track B",
+            artist: "Artist Name",
+            album: "Album Name",
+            durationMs: 180_000,
+            position: 42,
+            isPlaying: true,
+            artworkURL: nil
+        )
+
+        let request = AppleMusicAppleScriptService.artworkLookupRequest(for: snapshot)
+        let absoluteString = request?.url?.absoluteString ?? ""
+
+        #expect(absoluteString.contains("itunes.apple.com/search"))
+        #expect(absoluteString.contains("Artist%20Name"))
+        #expect(absoluteString.contains("Album%20Name"))
+    }
+
+    @Test("extract artwork URL prefers a matched album result")
+    func extractArtworkURLPrefersMatchedAlbum() throws {
+        let snapshot = PlaybackSnapshot(
+            player: .appleMusic,
+            trackId: "music-track",
+            title: "Track B",
+            artist: "Artist Name",
+            album: "Album Name",
+            durationMs: 180_000,
+            position: 42,
+            isPlaying: true,
+            artworkURL: nil
+        )
+        let data = try #require("""
+        {
+          "resultCount": 2,
+          "results": [
+            {
+              "artistName": "Artist Name",
+              "trackName": "Track B",
+              "collectionName": "Other Album",
+              "artworkUrl100": "https://example.com/other/100x100bb.jpg"
+            },
+            {
+              "artistName": "Artist Name",
+              "trackName": "Track B",
+              "collectionName": "Album Name",
+              "artworkUrl100": "https://example.com/matched/100x100bb.jpg"
+            }
+          ]
+        }
+        """.data(using: .utf8))
+
+        let artworkURL = AppleMusicAppleScriptService.extractArtworkURL(from: data, matching: snapshot)
+
+        #expect(artworkURL == "https://example.com/matched/512x512bb.jpg")
+    }
 }
