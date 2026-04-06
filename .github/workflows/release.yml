@@ -15,6 +15,7 @@ concurrency:
 jobs:
   build-and-release:
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +64,14 @@ jobs:
         run: |
           APP_PATH="build/Build/Products/Release/Lyrisland.app"
           ditto -c -k --keepParent "$APP_PATH" "Lyrisland-${{ steps.version.outputs.version }}.zip"
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Lyrisland-${{ steps.version.outputs.version }}
+          path: |
+            Lyrisland-${{ steps.version.outputs.version }}.dmg
+            Lyrisland-${{ steps.version.outputs.version }}.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.3.2

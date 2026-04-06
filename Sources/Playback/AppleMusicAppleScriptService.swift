@@ -3,7 +3,7 @@ import Foundation
 final class AppleMusicAppleScriptService: PlaybackControlling {
     let player: PlayerKind = .appleMusic
     private let session = URLSession(configuration: .default)
-    private var artworkURLCache: [String: String] = [:]
+    private let artworkURLCache = ArtworkURLCache()
 
     private let script: String = """
     if application \"Music\" is running then
@@ -147,7 +147,7 @@ final class AppleMusicAppleScriptService: PlaybackControlling {
     }
 
     private func enrichArtworkURL(for snapshot: PlaybackSnapshot) async -> PlaybackSnapshot {
-        if let cachedArtworkURL = artworkURLCache[snapshot.trackId] {
+        if let cachedArtworkURL = await artworkURLCache.value(for: snapshot.trackId) {
             return PlaybackSnapshot(
                 player: snapshot.player,
                 trackId: snapshot.trackId,
@@ -169,7 +169,7 @@ final class AppleMusicAppleScriptService: PlaybackControlling {
             return snapshot
         }
 
-        artworkURLCache[snapshot.trackId] = artworkURL
+        await artworkURLCache.set(artworkURL, for: snapshot.trackId)
         return PlaybackSnapshot(
             player: snapshot.player,
             trackId: snapshot.trackId,
@@ -182,6 +182,18 @@ final class AppleMusicAppleScriptService: PlaybackControlling {
             artworkURL: artworkURL,
             detectedAt: snapshot.detectedAt
         )
+    }
+}
+
+actor ArtworkURLCache {
+    private var storage: [String: String] = [:]
+
+    func value(for trackId: String) -> String? {
+        storage[trackId]
+    }
+
+    func set(_ artworkURL: String, for trackId: String) {
+        storage[trackId] = artworkURL
     }
 }
 

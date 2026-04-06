@@ -2,10 +2,21 @@ import SwiftUI
 
 /// The root view hosted inside the DynamicIslandPanel.
 struct IslandContentView: View {
+    enum RightClickAction: Equatable {
+        case ignore
+        case collapse
+        case confirmQuit
+    }
+
+    private static let attachedCompactWidth: CGFloat = 264
+    private static let attachedCompactTopBarHorizontalInset: CGFloat = earRadius + 8
+    private static let attachedCompactTopBarTopInset: CGFloat = 4
+
     @ObservedObject var syncEngine: PlaybackSyncEngine
     @ObservedObject var lyricsManager: LyricsManager
     @ObservedObject var appState: AppState
     @State private var islandState: IslandState = .compact
+    @State private var compactPresentation: CompactIslandView.CompactPresentationMode = .normal
     @State private var isAttached: Bool = UserDefaults.standard.islandPositionMode == .attached
     @State private var isInSnapZone = false
 
@@ -53,13 +64,19 @@ struct IslandContentView: View {
 
             // In attached mode, content is aligned to the bottom so it appears below the menu bar
             HStack(spacing: 10) {
-                if appState.showArtwork {
+                if appState.showArtwork, islandState != .compact {
                     artworkColumn
                 }
 
                 switch islandState {
                 case .compact:
-                    CompactIslandView(syncEngine: syncEngine, lyricsManager: lyricsManager, appState: appState)
+                    CompactIslandView(
+                        syncEngine: syncEngine,
+                        lyricsManager: lyricsManager,
+                        appState: appState,
+                        attached: showAttachedCompactTopBar,
+                        presentation: compactPresentation
+                    )
                 case .expanded:
                     ExpandedIslandView(syncEngine: syncEngine, lyricsManager: lyricsManager, appState: appState)
                 case .full:
@@ -68,11 +85,24 @@ struct IslandContentView: View {
             }
             .frame(
                 maxHeight: showAttachedAppearance
-                    ? Self.contentHeight(for: islandState, dualLine: appState.dualLineMode, artwork: appState.showArtwork)
+                    ? Self.contentHeight(
+                        for: islandState,
+                        attached: isAttached,
+                        dualLine: appState.dualLineMode,
+                        artwork: appState.showArtwork,
+                        compactPresentation: compactPresentation
+                    )
                     : .infinity
             )
             .padding(.horizontal, showAttachedAppearance ? Self.earRadius : 0)
             .padding(contentPadding)
+
+            if showAttachedCompactTopBar {
+                attachedCompactTopBar
+                    .padding(.horizontal, Self.attachedCompactTopBarHorizontalInset)
+                    .padding(.top, Self.attachedCompactTopBarTopInset)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
         }
         .environment(\.rootFontSize, appState.rootFontSize)
         .environment(\.contentColor, appState.contentColor)
@@ -93,6 +123,19 @@ struct IslandContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .islandTapped)) { _ in
             cycleState()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .islandRightClicked)) { _ in
+            switch Self.rightClickAction(for: islandState, compactPresentation: compactPresentation) {
+            case .ignore:
+                break
+            case .collapse:
+                withAnimation(.easeOut(duration: 0.2)) {
+                    compactPresentation = .collapsed
+                }
+                resizePanel(for: islandState)
+            case .confirmQuit:
+                presentQuitConfirmation()
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .islandPositionModeChanged)) { notification in
             if let mode = notification.object as? IslandPositionMode {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -109,6 +152,9 @@ struct IslandContentView: View {
             }
         }
         .onChange(of: islandState) { _, newState in
+            if newState != .compact {
+                compactPresentation = .normal
+            }
             resizePanel(for: newState)
         }
         .onChange(of: appState.dualLineMode) { _, _ in
@@ -159,6 +205,55 @@ struct IslandContentView: View {
         }
     }
 
+    private var showAttachedCompactTopBar: Bool {
+        isAttached && islandState == .compact
+    }
+
+    private var attachedCompactTopBar: some View {
+        HStack(spacing: 0) {
+            if appState.showArtwork {
+                ArtworkView(
+                    trackId: syncEngine.currentTrackId,
+                    artworkURL: syncEngine.artworkURL,
+                    size: CompactIslandView.LayoutMetrics.topRowArtworkSize
+                )
+                .frame(
+                    width: CompactIslandView.LayoutMetrics.topRowArtworkSize,
+                    height: CompactIslandView.LayoutMetrics.topRowArtworkSize
+                )
+            } else {
+                Color.clear
+                    .frame(
+                        width: CompactIslandView.LayoutMetrics.topRowArtworkSize,
+                        height: CompactIslandView.LayoutMetrics.topRowArtworkSize
+                    )
+            }
+
+            Spacer(minLength: 0)
+
+            if syncEngine.isPlaying {
+                PlayingIndicator()
+                    .frame(
+                        width: CompactIslandView.LayoutMetrics.topRowIndicatorWidth,
+                        height: CompactIslandView.LayoutMetrics.topRowArtworkSize
+                    )
+            } else {
+                Image(systemName: compactStatusIcon)
+                    .font(.system(size: .rem(0.625, root: rootFontSize)))
+                    .foregroundStyle(appState.contentColor.opacity(0.6))
+                    .frame(width: CompactIslandView.LayoutMetrics.topRowIndicatorWidth)
+            }
+        }
+        .frame(height: CompactIslandView.LayoutMetrics.topRowHeight)
+    }
+
+    private var compactStatusIcon: String {
+        if !syncEngine.isPlaying, syncEngine.currentTrackId == nil {
+            return "antenna.radiowaves.left.and.right.slash"
+        }
+        return "pause.fill"
+    }
+
     @ViewBuilder
     private var sourcePickerBadge: some View {
         if let currentSource = lyricsManager.currentLyrics?.source {
@@ -192,7 +287,11 @@ struct IslandContentView: View {
     private var contentPadding: EdgeInsets {
         switch islandState {
         case .compact:
-            EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+            if showAttachedCompactTopBar {
+                EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
+            } else {
+                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+            }
         case .expanded:
             // In attached mode, move bottom padding to top so the content clears the notch.
             // The bottom padding otherwise pushes the bottom-aligned content up into the menu bar area.
@@ -218,16 +317,35 @@ struct IslandContentView: View {
     }
 
     /// The content-only height (without menu bar extension).
-    static func contentHeight(for state: IslandState, dualLine: Bool = false, artwork: Bool = true) -> CGFloat {
+    static func contentHeight(
+        for state: IslandState,
+        attached: Bool = false,
+        dualLine: Bool = false,
+        artwork: Bool = true,
+        compactPresentation: CompactIslandView.CompactPresentationMode = .normal
+    ) -> CGFloat {
         switch state {
-        case .compact: dualLine ? 62 : artwork ? 48 : 38
-        case .expanded: artwork ? 140 : 120
-        case .full: artwork ? 340 : 340
+        case .compact:
+            if attached {
+                switch compactPresentation {
+                case .normal:
+                    return CompactIslandView.LayoutMetrics.topRowHeight
+                        + CompactIslandView.LayoutMetrics.lyricRowMinHeight
+                        + 4
+                case .collapsed:
+                    return CompactIslandView.LayoutMetrics.topRowHeight - 10
+                }
+            }
+            return artwork ? 48 : 38
+        case .expanded:
+            return artwork ? 140 : 120
+        case .full:
+            return artwork ? 340 : 340
         }
     }
 
     /// Radius of the inverse corner "ears" in attached mode.
-    static let earRadius: CGFloat = 10
+    static let earRadius: CGFloat = 8
 
     /// Extra top margin in detached mode so content that overshoots during
     /// the SwiftUI transition animation has transparent space to overflow
@@ -246,13 +364,28 @@ struct IslandContentView: View {
         attached: Bool = false,
         dualLine: Bool = false,
         artwork: Bool = true,
+        compactPresentation: CompactIslandView.CompactPresentationMode = .normal,
         screen: NSScreen? = nil
     ) -> NSSize {
-        let h = contentHeight(for: state, dualLine: dualLine, artwork: artwork)
-        let w: CGFloat = switch state {
-        case .compact: 350
-        case .expanded: artwork ? 450 : 380
-        case .full: artwork ? 540 : 400
+        let h = contentHeight(
+            for: state,
+            attached: attached,
+            dualLine: dualLine,
+            artwork: artwork,
+            compactPresentation: compactPresentation
+        )
+        let w: CGFloat
+        switch state {
+        case .compact:
+            if attached {
+                w = attachedCompactWidth
+            } else {
+                w = 350
+            }
+        case .expanded:
+            w = artwork ? 450 : 380
+        case .full:
+            w = artwork ? 540 : 400
         }
         if attached {
             // On notch screens menuBarHeight covers the top padding need;
@@ -264,7 +397,30 @@ struct IslandContentView: View {
         return NSSize(width: w, height: h + verticalPadding(for: state) + transitionOverflowMargin)
     }
 
+    static func rightClickAction(
+        for state: IslandState,
+        compactPresentation: CompactIslandView.CompactPresentationMode
+    ) -> RightClickAction {
+        guard state == .compact else { return .ignore }
+
+        switch compactPresentation {
+        case .normal:
+            return .collapse
+        case .collapsed:
+            return .confirmQuit
+        }
+    }
+
+    static func quitConfirmationMessage(appName: String) -> String {
+        "是否要退出\(appName)？"
+    }
+
     private func cycleState() {
+        if isAttached, islandState == .compact, compactPresentation == .collapsed {
+            compactPresentation = .normal
+            resizePanel(for: .compact)
+            return
+        }
         if isAttached {
             // Attached mode: no SwiftUI animation — it would pull the
             // window away from the screen top. Content is bottom-aligned
@@ -292,7 +448,22 @@ struct IslandContentView: View {
             attached: isAttached,
             dualLine: appState.dualLineMode,
             artwork: appState.showArtwork,
+            compactPresentation: compactPresentation,
             screen: window.screen
         ))
+    }
+
+    private func presentQuitConfirmation() {
+        let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? "Lyrisland"
+        let alert = NSAlert()
+        alert.messageText = Self.quitConfirmationMessage(appName: appName)
+        alert.addButton(withTitle: String(localized: "menu.quit"))
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSApp.terminate(nil)
+        }
     }
 }

@@ -269,19 +269,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func pollPlayers() {
         Task {
-            let spotifySnapshot = await spotifyService.fetchPlaybackState()
-            let appleMusicSnapshot = await appleMusicService.fetchPlaybackState()
+            appState.refresh()
+
+            let players = Self.playersToPoll(for: [
+                .spotify: appState.status(for: .spotify),
+                .appleMusic: appState.status(for: .appleMusic),
+            ])
 
             var snapshots: [PlayerKind: PlaybackSnapshot] = [:]
-            if let spotifySnapshot {
-                snapshots[.spotify] = spotifySnapshot
-            }
-            if let appleMusicSnapshot {
-                snapshots[.appleMusic] = appleMusicSnapshot
+            for player in players {
+                if let snapshot = await playbackController(for: player).fetchPlaybackState() {
+                    snapshots[player] = snapshot
+                }
             }
 
             let selected = playbackCoordinator.selectActivePlayback(from: snapshots)
-            appState.refresh()
             appState.setActivePlayer(selected?.player)
 
             guard let selected else {
@@ -330,6 +332,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .appleMusic:
             appleMusicService
         }
+    }
+
+    static func playersToPoll(for statuses: [PlayerKind: AppState.PlayerStatus]) -> [PlayerKind] {
+        if statuses[.appleMusic] == .running {
+            return [.appleMusic]
+        }
+
+        if statuses[.spotify] == .running {
+            return [.spotify]
+        }
+
+        return []
     }
 
     // MARK: - Actions

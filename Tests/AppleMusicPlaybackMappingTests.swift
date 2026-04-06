@@ -91,4 +91,43 @@ struct AppleMusicPlaybackMappingTests {
 
         #expect(artworkURL == "https://example.com/matched/512x512bb.jpg")
     }
+
+    @Test("artwork URL cache serializes concurrent access")
+    func artworkURLCacheSerializesConcurrentAccess() async {
+        let cache = ArtworkURLCache()
+
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0 ..< 100 {
+                group.addTask {
+                    await cache.set("https://example.com/\(index)", for: "track-\(index)")
+                }
+            }
+        }
+
+        let cachedArtworkURL = await cache.value(for: "track-42")
+        #expect(cachedArtworkURL == "https://example.com/42")
+    }
+
+    @Test("Spotify parse maps playing response including artwork URL")
+    func spotifyParsePlayingResponse() {
+        let state = SpotifyAppleScriptService.parse(
+            raw: "spotify:track:123||Track A||Artist||Album||180000||42.5||playing||https://example.com/cover.jpg"
+        )
+
+        #expect(state?.trackId == "spotify:track:123")
+        #expect(state?.title == "Track A")
+        #expect(state?.artist == "Artist")
+        #expect(state?.album == "Album")
+        #expect(state?.durationMs == 180000)
+        #expect(state?.position == 42.5)
+        #expect(state?.isPlaying == true)
+        #expect(state?.artworkURL == "https://example.com/cover.jpg")
+    }
+
+    @Test("Spotify parse returns nil when app is not running")
+    func spotifyParseNotRunningResponse() {
+        let state = SpotifyAppleScriptService.parse(raw: "NOT_RUNNING")
+
+        #expect(state == nil)
+    }
 }

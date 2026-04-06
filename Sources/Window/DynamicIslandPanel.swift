@@ -251,6 +251,17 @@ final class DynamicIslandPanel: NSPanel {
         isDragUnlocked = false
     }
 
+    override func rightMouseUp(with event: NSEvent) {
+        let locationInWindow = event.locationInWindow
+        if let hitView = contentView?.hitTest(locationInWindow),
+           hitView is NSControl || hitView.enclosingMenuItem != nil {
+            super.rightMouseUp(with: event)
+            return
+        }
+
+        NotificationCenter.default.post(name: .islandRightClicked, object: nil)
+    }
+
     override func orderFront(_ sender: Any?) {
         super.orderFront(sender)
         // On first appearance the panel now has a valid screen.
@@ -276,6 +287,7 @@ final class DynamicIslandPanel: NSPanel {
 
 extension Notification.Name {
     static let islandTapped = Notification.Name("islandTapped")
+    static let islandRightClicked = Notification.Name("islandRightClicked")
     static let islandPositionModeChanged = Notification.Name("islandPositionModeChanged")
     static let islandPositionModeSettingsChanged = Notification.Name("islandPositionModeSettingsChanged")
     static let islandSnapZoneChanged = Notification.Name("islandSnapZoneChanged")

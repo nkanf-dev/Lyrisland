@@ -9,12 +9,13 @@
 </p>
 
 <p align="center">
-  Real-time Spotify lyrics in a Dynamic Island style overlay for macOS
+  Real-time lyrics for Spotify and Apple Music in a Dynamic Island style overlay for macOS
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14.0%2B-blue" alt="macOS 14.0+">
   <img src="https://img.shields.io/badge/Spotify-Desktop-1DB954?logo=spotify&logoColor=white" alt="Spotify">
+  <img src="https://img.shields.io/badge/Apple%20Music-supported-fa243c?logo=applemusic&logoColor=white" alt="Apple Music">
 </p>
 
 <p align="center">
@@ -25,26 +26,26 @@
 
 ## What is Lyrisland?
 
-Lyrisland displays real-time Spotify lyrics at the top of your screen in a Dynamic Island style overlay. Lyrics are precisely synced with playback — lightweight, elegant, and always on your desktop.
+Lyrisland displays synced lyrics at the top of your screen in a Dynamic Island style overlay. It automatically detects playback from supported local players, keeps lyrics aligned with progress, and stays lightweight in the macOS menu bar.
 
 ## Features
 
-- **Dynamic Island Modes** — Compact, Expanded, and Full modes with smooth animated transitions; Expanded shows track info, Full includes playback controls (prev/play-pause/next)
-- **Real-time Sync** — Line-by-line lyrics highlighting, precisely aligned with playback progress
-- **Album Artwork** — Displays album art in all three modes — thumbnail in Compact, medium cover in Expanded, large cover in Full
-- **Dual-line Lyrics** — Karaoke-style display showing current and next line simultaneously (toggle with ⌘D)
-- **Multiple Lyrics Sources** — Fallback chain across 4 providers: LRCLIB → Musixmatch → SodaMusic → Netease, with drag-to-reorder priority and per-source enable/disable in Settings
-- **Flexible Positioning** — Snap to menu bar (attached) or free-drag anywhere on screen (detached), with position persisted across launches
-- **Background Styles** — Choose from solid color, album gradient, frosted glass, or dynamic gradient backgrounds
-- **Customizable Shortcuts** — View, rebind, or disable all keyboard shortcuts in Settings, with conflict detection and one-click reset
-- **RTL Support** — Automatic text direction detection for right-to-left languages (e.g. Arabic), with adaptive marquee scroll and alignment
-- **Multilingual UI** — Localized in English, 简体中文, 繁體中文, 日本語, 한국어
-- **No Login Required** — Reads playback state directly from the local Spotify client via AppleScript, no account authorization needed
-- **Lightweight & Resident** — Runs in the menu bar only, no Dock icon, minimal resource usage
+- **Spotify + Apple Music** — Detects playback from the local Spotify desktop app and the built-in Music app
+- **Dynamic Island Modes** — Compact, Expanded, and Full layouts with animated transitions and optional playback controls
+- **Real-time Sync** — Highlights lyrics line by line in sync with playback progress
+- **Album Artwork** — Shows artwork across all island sizes, with cached artwork for smooth transitions
+- **Dual-line Lyrics** — Displays the current and upcoming lyric lines together for karaoke-style reading
+- **Multiple Lyrics Sources** — Searches across multiple providers with reorderable priority and per-provider enable/disable controls
+- **Flexible Positioning** — Attach to the menu bar or detach and drag freely, with the window position restored on launch
+- **Background Styles** — Solid, album gradient, frosted glass, and dynamic gradient backgrounds
+- **Customizable Shortcuts** — Rebind, disable, reset, and validate keyboard shortcuts in Settings
+- **RTL Support** — Adapts alignment and marquee behavior for right-to-left lyrics
+- **Multilingual UI** — English, 简体中文, 繁體中文, 日本語, 한국어
+- **Menu Bar Utility** — Runs without a Dock icon and focuses on minimal desktop footprint
 
 ## Installation
 
-### Homebrew (recommended)
+### Homebrew
 
 ```bash
 brew tap EurFelux/lyrisland
@@ -93,33 +94,43 @@ Download the latest `.dmg` from [GitHub Releases](https://github.com/EurFelux/Ly
 
 ## Getting Started
 
-1. Make sure [Spotify Desktop](https://www.spotify.com/download/) is installed
-2. Open Lyrisland
-3. On first launch, macOS will request Automation permission — please allow it
-4. Play a song in Spotify, and lyrics will automatically appear at the top of your screen
+1. Install either [Spotify Desktop](https://www.spotify.com/download/) or the built-in Apple Music app.
+2. Open Lyrisland.
+3. On first launch, allow the macOS Automation permission prompt so Lyrisland can read playback state.
+4. Start playback in Spotify or Apple Music and lyrics will appear automatically.
 
 ## Requirements
 
 - macOS 14.0 (Sonoma) or later
-- Spotify Desktop client
+- Spotify Desktop and/or Apple Music
+
+## Development
+
+```bash
+xcodegen generate
+xcodebuild -project Lyrisland.xcodeproj -scheme Lyrisland -destination 'platform=macOS' build
+xcodebuild test -project Lyrisland.xcodeproj -scheme Lyrisland -destination 'platform=macOS'
+```
+
+For local `.dmg` and `.zip` packaging, see [docs/release-packaging.md](docs/release-packaging.md).
 
 ## FAQ
 
-**Q: Do I need to log in to Spotify?**
-No. Lyrisland reads playback info from the local Spotify client without any account authorization.
+**Q: Do I need to sign in to a streaming account?**
+No. Lyrisland reads playback information from supported local apps through Automation permissions.
 
 **Q: Why are there no lyrics for some songs?**
-Lyrics come from third-party public databases. Niche tracks or instrumentals may not be available yet.
+Lyrics come from third-party public databases. Some tracks, regional releases, or instrumentals may not be available.
 
 **Q: What if the lyrics are out of sync?**
-Use the offset adjustment from the menu bar icon (`[` / `]` keys, ±0.5 seconds each).
+Use the offset adjustment from the menu bar icon with `[` and `]` to move timing by `±0.5s`.
 
-**Q: Does it support Apple Music?**
-Currently only Spotify is supported.
+**Q: Which players are supported?**
+Spotify Desktop and Apple Music on macOS.
 
 ## Credits
 
-- [Lyricify Lyrics Helper](https://github.com/WXRIW/Lyricify-Lyrics-Helper) — Musixmatch & Netease lyrics API reference
+- [Lyricify Lyrics Helper](https://github.com/WXRIW/Lyricify-Lyrics-Helper) — Musixmatch and Netease API reference
 
 ## License
 

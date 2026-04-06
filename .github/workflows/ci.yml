@@ -11,8 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-lint:
+  build-lint-and-test:
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -22,28 +23,30 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Build
-        run: |
-          xcodebuild -project Lyrisland.xcodeproj \
-            -scheme Lyrisland \
-            -destination 'platform=macOS' \
-            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            build
-
       - name: Check formatting
         run: |
-          if ! swiftformat --lint Sources; then
-            echo "::error::SwiftFormat found formatting issues. Run 'swiftformat Sources' locally to fix."
+          if ! swiftformat --lint Sources Tests; then
+            echo "::error::SwiftFormat found formatting issues. Run 'swiftformat Sources Tests' locally to fix."
             exit 1
           fi
 
       - name: Lint
-        run: swiftlint Sources
+        run: swiftlint lint --strict Sources Tests
 
-      - name: Test
+      - name: Build app
+        run: |
+          xcodebuild -project Lyrisland.xcodeproj \
+            -scheme Lyrisland \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Run tests
         run: |
           xcodebuild test \
             -project Lyrisland.xcodeproj \
-            -scheme LyrislandTests \
+            -scheme Lyrisland \
             -destination 'platform=macOS' \
+            -derivedDataPath build \
             CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

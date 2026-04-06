@@ -26,7 +26,7 @@ final class SpotifyAppleScriptService: PlaybackControlling {
             set trackDuration to duration of current track
             set playerPos to player position
             set playerState to player state as string
-            set artURL to artwork url of current track
+            set artURL to artwork URL of current track
             return trackId & "||" & trackName & "||" & trackArtist & "||" & trackAlbum & "||" & (trackDuration as string) & "||" & (playerPos as string) & "||" & playerState & "||" & artURL
         end tell
     else
@@ -109,6 +109,11 @@ final class SpotifyAppleScriptService: PlaybackControlling {
             return nil
         }
 
+        return parse(raw: raw)
+    }
+
+    static func parse(raw: String) -> SpotifyPlaybackState? {
+        guard raw != "NOT_RUNNING" else { return nil }
         let parts = raw.components(separatedBy: "||")
         guard parts.count >= 7 else { return nil }
 

@@ -65,6 +65,30 @@ struct AppStatePlayerStatusTests {
         #expect(emissions == emissionsAfterFirstRefresh)
         _ = cancellable
     }
+
+    @Test("poll prefers Apple Music when both supported players are running")
+    func pollPrefersAppleMusicWhenAvailable() {
+        let players = AppDelegate.playersToPoll(
+            for: [
+                .spotify: .running,
+                .appleMusic: .running,
+            ]
+        )
+
+        #expect(players == [.appleMusic])
+    }
+
+    @Test("poll falls back to Spotify when Apple Music is unavailable")
+    func pollFallsBackToSpotify() {
+        let players = AppDelegate.playersToPoll(
+            for: [
+                .spotify: .running,
+                .appleMusic: .notRunning,
+            ]
+        )
+
+        #expect(players == [.spotify])
+    }
 }
 
 private struct PlayerEnvironmentInspectorStub: PlayerEnvironmentInspecting {

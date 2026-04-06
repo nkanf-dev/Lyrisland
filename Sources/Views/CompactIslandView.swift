@@ -1,62 +1,72 @@
 import SwiftUI
 
 /// Compact state: single-line song title + playing indicator.
-/// When dual-line mode is on, also shows the upcoming next line below.
 struct CompactIslandView: View {
+    enum CompactPresentationMode: Equatable {
+        case normal
+        case collapsed
+    }
+
+    enum LayoutMetrics {
+        static let topRowArtworkSize: CGFloat = 18
+        static let topRowIndicatorWidth: CGFloat = 16
+        static let topRowHeight: CGFloat = 14
+        static let lyricRowMinHeight: CGFloat = 6
+        static let verticalSpacing: CGFloat = 4
+    }
+
+    static let prefersDualLineLyricsInCompact = false
+
     @ObservedObject var syncEngine: PlaybackSyncEngine
     @ObservedObject var lyricsManager: LyricsManager
     @ObservedObject var appState: AppState
+    let attached: Bool
+    let presentation: CompactPresentationMode
     @Environment(\.rootFontSize) private var rootFontSize
 
     var body: some View {
-        HStack(spacing: 10) {
-            // Playing indicator bars
-            if syncEngine.isPlaying {
-                PlayingIndicator()
-                    .frame(width: 16, height: 16)
-            } else {
-                Image(systemName: statusIcon)
-                    .font(.system(size: .rem(0.625, root: rootFontSize)))
-                    .foregroundStyle(appState.contentColor.opacity(0.6))
-            }
-
-            // Lyrics display
-            if appState.dualLineMode, let lyrics = lyricsManager.currentLyrics, let idx = currentLineIndex {
-                // Dual-line mode: ForEach keyed by line index so SwiftUI tracks
-                // the next line sliding up to become the current line
-                let indices = idx + 1 < lyrics.lines.count ? [idx, idx + 1] : [idx]
-                VStack(alignment: appState.resolvedHorizontalAlignment, spacing: 2) {
-                    ForEach(indices, id: \.self) { lineIdx in
-                        DualLineRow(
-                            text: lyrics.lines[lineIdx].text,
-                            isCurrent: lineIdx == idx,
-                            lineDuration: lineDuration(for: lineIdx, in: lyrics),
-                            rootFontSize: rootFontSize,
-                            contentColor: appState.contentColor
-                        )
-                        .environment(\.layoutDirection, lyrics.lines[lineIdx].text.isRTL ? .rightToLeft : .leftToRight)
-                        .transition(.push(from: .bottom).combined(with: .opacity))
-                    }
+        Group {
+            if attached {
+                if presentation == .normal {
+                    lyricRow
                 }
-                .animation(.smooth(duration: 0.35), value: idx)
-                .frame(maxWidth: .infinity, alignment: appState.resolvedLyricsAlignment)
             } else {
-                // Single-line mode: original MarqueeText behavior
-                MarqueeText(
-                    text: displayText,
-                    font: .system(size: .rem(0.8125, root: rootFontSize), weight: .medium),
-                    color: displayTextOpacity,
-                    loops: false,
-                    lineDuration: currentLineDuration
-                )
-                .transition(.push(from: .bottom).combined(with: .opacity))
-                .id(currentLineIndex ?? -1)
-                .animation(.smooth(duration: 0.35), value: currentLineIndex)
-                .frame(maxWidth: .infinity, alignment: appState.resolvedLyricsAlignment)
-                .environment(\.layoutDirection, displayText.isRTL ? .rightToLeft : .leftToRight)
+                HStack(spacing: 10) {
+                    playbackStatusSlot
+                    lyricRow
+                }
             }
         }
-        // padding handled by parent IslandContentView
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private var playbackStatusSlot: some View {
+        if syncEngine.isPlaying {
+            PlayingIndicator()
+                .frame(width: LayoutMetrics.topRowIndicatorWidth, height: LayoutMetrics.topRowArtworkSize)
+        } else {
+            Image(systemName: statusIcon)
+                .font(.system(size: .rem(0.625, root: rootFontSize)))
+                .foregroundStyle(appState.contentColor.opacity(0.6))
+                .frame(width: LayoutMetrics.topRowIndicatorWidth)
+        }
+    }
+
+    private var lyricRow: some View {
+        MarqueeText(
+            text: displayText,
+            font: .system(size: .rem(0.8125, root: rootFontSize), weight: .medium),
+            color: displayTextOpacity,
+            loops: false,
+            lineDuration: currentLineDuration
+        )
+        .transition(.push(from: .bottom).combined(with: .opacity))
+        .id(currentLineIndex ?? -1)
+        .animation(.smooth(duration: 0.35), value: currentLineIndex)
+        .frame(maxWidth: .infinity, minHeight: LayoutMetrics.lyricRowMinHeight, alignment: attached ? .center : appState.resolvedLyricsAlignment)
+        .multilineTextAlignment(attached ? .center : .leading)
+        .environment(\.layoutDirection, displayText.isRTL ? .rightToLeft : .leftToRight)
     }
 
     private var statusIcon: String {
@@ -114,31 +124,5 @@ struct CompactIslandView: View {
     private func lineDuration(for index: Int, in lyrics: SyncedLyrics) -> Double? {
         guard index + 1 < lyrics.lines.count else { return nil }
         return lyrics.lines[index + 1].time - lyrics.lines[index].time
-    }
-}
-
-/// Lightweight equatable row with marquee support for long text.
-private struct DualLineRow: View, Equatable {
-    let text: String
-    let isCurrent: Bool
-    var lineDuration: Double?
-    let rootFontSize: CGFloat
-    let contentColor: Color
-
-    var body: some View {
-        MarqueeText(
-            text: text,
-            font: isCurrent
-                ? .system(size: .rem(0.8125, root: rootFontSize), weight: .medium)
-                : .system(size: .rem(0.6875, root: rootFontSize)),
-            color: isCurrent ? contentColor : contentColor.opacity(0.4),
-            scrollEnabled: isCurrent,
-            loops: false,
-            lineDuration: lineDuration
-        )
-        // Force recreation when the row transitions from next→current (or vice-versa).
-        // Without this, SwiftUI reuses the same MarqueeText instance and the stale
-        // animationPhase (.idle with scrollEnabled=false) never restarts.
-        .id(isCurrent)
     }
 }
