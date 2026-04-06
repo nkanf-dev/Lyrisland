@@ -1,4 +1,5 @@
 @testable import Lyrisland
+import Combine
 import Testing
 
 @MainActor
@@ -41,11 +42,35 @@ struct AppStatePlayerStatusTests {
 
         #expect(appState.activePlayer == .appleMusic)
     }
+
+    @Test("refresh does not emit changes when player environment is unchanged")
+    func refreshDoesNotEmitWhenUnchanged() {
+        let appState = AppState()
+        let inspector = PlayerEnvironmentInspectorStub(
+            installed: [.spotify, .appleMusic],
+            running: [.spotify],
+            hasPermission: true
+        )
+        var emissions = 0
+        let cancellable = appState.objectWillChange.sink {
+            emissions += 1
+        }
+
+        appState.refresh(inspector: inspector)
+        let emissionsAfterFirstRefresh = emissions
+
+        appState.refresh(inspector: inspector)
+
+        #expect(emissionsAfterFirstRefresh > 0)
+        #expect(emissions == emissionsAfterFirstRefresh)
+        _ = cancellable
+    }
 }
 
 private struct PlayerEnvironmentInspectorStub: PlayerEnvironmentInspecting {
     let installed: Set<PlayerKind>
     let running: Set<PlayerKind>
+    var hasPermission: Bool = true
 
     func isInstalled(_ player: PlayerKind) -> Bool {
         installed.contains(player)
@@ -56,6 +81,6 @@ private struct PlayerEnvironmentInspectorStub: PlayerEnvironmentInspecting {
     }
 
     func hasAutomationPermission() -> Bool {
-        true
+        hasPermission
     }
 }

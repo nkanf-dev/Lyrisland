@@ -162,15 +162,26 @@ final class AppState: ObservableObject {
 
     /// Refresh all status checks.
     func refresh(inspector: PlayerEnvironmentInspecting = SystemPlayerEnvironmentInspector()) {
+        var updatedStatuses = playerStatuses
         for player in PlayerKind.allCases {
+            let status: PlayerStatus
             if !inspector.isInstalled(player) {
-                playerStatuses[player] = .notInstalled
+                status = .notInstalled
             } else if inspector.isRunning(player) {
-                playerStatuses[player] = .running
+                status = .running
             } else {
-                playerStatuses[player] = .notRunning
+                status = .notRunning
             }
+            updatedStatuses[player] = status
         }
-        permissionStatus = inspector.hasAutomationPermission() ? .granted : .unknown
+
+        if updatedStatuses != playerStatuses {
+            playerStatuses = updatedStatuses
+        }
+
+        let updatedPermissionStatus: PermissionStatus = inspector.hasAutomationPermission() ? .granted : .unknown
+        if permissionStatus != updatedPermissionStatus {
+            permissionStatus = updatedPermissionStatus
+        }
     }
 }
