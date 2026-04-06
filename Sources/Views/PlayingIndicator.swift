@@ -2,26 +2,28 @@ import SwiftUI
 
 /// Animated sound bars indicator (like Spotify's playing animation).
 struct PlayingIndicator: View {
-    @State private var animating = false
-
     var body: some View {
-        HStack(spacing: 2) {
-            ForEach(0 ..< 3, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(.green)
-                    .frame(width: 3)
-                    .scaleEffect(
-                        y: animating ? CGFloat.random(in: 0.3 ... 1.0) : 0.4,
-                        anchor: .bottom
-                    )
-                    .animation(
-                        .easeInOut(duration: 0.4)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(i) * 0.15),
-                        value: animating
-                    )
+        TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { timeline in
+            HStack(spacing: 2) {
+                ForEach(0 ..< 3, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(.green)
+                        .frame(width: 3)
+                        .scaleEffect(
+                            y: Self.barScale(
+                                at: timeline.date.timeIntervalSinceReferenceDate,
+                                index: index
+                            ),
+                            anchor: .bottom
+                        )
+                }
             }
         }
-        .onAppear { animating = true }
+    }
+
+    static func barScale(at time: TimeInterval, index: Int) -> CGFloat {
+        let phase = time * 5.2 + Double(index) * 0.9
+        let normalized = (sin(phase) + sin(phase * 1.7 + 0.6)) * 0.25 + 0.5
+        return max(0.3, min(1.0, CGFloat(normalized)))
     }
 }

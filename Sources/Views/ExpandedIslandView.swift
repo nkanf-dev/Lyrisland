@@ -40,38 +40,18 @@ struct ExpandedIslandView: View {
                 let range = contextRange(around: currentIdx, total: lyrics.lines.count)
 
                 ForEach(lyrics.lines[range]) { line in
-                    let isCurrent = line.id == currentIdx
-                    let distance = abs(line.id - currentIdx)
-                    let lineDirection: LayoutDirection = line.text.isRTL ? .rightToLeft : .leftToRight
-
-                    if isCurrent {
-                        MarqueeText(
-                            text: line.text,
-                            font: .system(size: .rem(0.9375, root: rootFontSize), weight: .bold),
-                            color: appState.contentColor,
-                            loops: false,
-                            lineDuration: lineDuration(for: currentIdx, in: lyrics)
-                        )
-                        .frame(height: 20)
-                        .frame(maxWidth: .infinity, alignment: appState.resolvedLyricsAlignment)
-                        .environment(\.layoutDirection, lineDirection)
-                        .transition(.push(from: .bottom))
-                    } else {
-                        Text(line.text)
-                            .font(.system(
-                                size: .rem(distance == 1 ? 0.8125 : 0.75, root: rootFontSize),
-                                weight: distance == 1 ? .medium : .regular
-                            ))
-                            .foregroundStyle(appState.contentColor.opacity(opacityFor(distance: distance)))
-                            .lineLimit(1)
-                            .blur(radius: blurFor(distance: distance))
-                            .frame(height: 20)
-                            .frame(maxWidth: .infinity, alignment: appState.resolvedLyricsAlignment)
-                            .environment(\.layoutDirection, lineDirection)
-                            .transition(.push(from: .bottom))
-                    }
+                    ExpandedLyricLineRow(
+                        text: line.text,
+                        isCurrent: line.id == currentIdx,
+                        distance: abs(line.id - currentIdx),
+                        rootFontSize: rootFontSize,
+                        contentColor: appState.contentColor,
+                        alignment: appState.resolvedLyricsAlignment,
+                        lineDuration: lineDuration(for: currentIdx, in: lyrics)
+                    )
+                    .environment(\.layoutDirection, line.text.isRTL ? .rightToLeft : .leftToRight)
+                    .transition(.push(from: .bottom))
                 }
-                .id(currentIdx)
             } else {
                 Text("lyrics.no_lyrics")
                     .font(.system(size: .rem(0.8125, root: rootFontSize)))
@@ -109,5 +89,56 @@ struct ExpandedIslandView: View {
     private func lineDuration(for index: Int, in lyrics: SyncedLyrics) -> Double? {
         guard index + 1 < lyrics.lines.count else { return nil }
         return lyrics.lines[index + 1].time - lyrics.lines[index].time
+    }
+}
+
+private struct ExpandedLyricLineRow: View, Equatable {
+    let text: String
+    let isCurrent: Bool
+    let distance: Int
+    let rootFontSize: CGFloat
+    let contentColor: Color
+    let alignment: Alignment
+    let lineDuration: Double?
+
+    var body: some View {
+        Group {
+            if isCurrent {
+                MarqueeText(
+                    text: text,
+                    font: .system(size: .rem(0.9375, root: rootFontSize), weight: .bold),
+                    color: contentColor,
+                    loops: false,
+                    lineDuration: lineDuration
+                )
+            } else {
+                Text(text)
+                    .font(.system(
+                        size: .rem(distance == 1 ? 0.8125 : 0.75, root: rootFontSize),
+                        weight: distance == 1 ? .medium : .regular
+                    ))
+                    .foregroundStyle(contentColor.opacity(opacityFor(distance: distance)))
+                    .lineLimit(1)
+                    .blur(radius: blurFor(distance: distance))
+            }
+        }
+        .frame(height: 20)
+        .frame(maxWidth: .infinity, alignment: alignment)
+    }
+
+    private func opacityFor(distance: Int) -> Double {
+        switch distance {
+        case 1: 0.55
+        case 2: 0.3
+        default: 0.15
+        }
+    }
+
+    private func blurFor(distance: Int) -> CGFloat {
+        switch distance {
+        case 1: 0
+        case 2: 0.3
+        default: 0.8
+        }
     }
 }
