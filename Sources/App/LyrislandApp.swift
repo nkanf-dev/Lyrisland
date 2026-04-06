@@ -7,7 +7,7 @@ struct LyrislandApp: App {
     var body: some Scene {
         // LSUIElement app — no main window, only the floating island + menu bar
         Settings {
-            SettingsView(lyricsManager: appDelegate.lyricsManager)
+            SettingsView(lyricsManager: appDelegate.lyricsManager, appState: appDelegate.appState)
         }
     }
 }

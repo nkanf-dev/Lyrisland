@@ -3,10 +3,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var lyricsManager: LyricsManager
+    @ObservedObject var appState: AppState
 
     var body: some View {
         TabView {
-            GeneralTab()
+            GeneralTab(appState: appState)
                 .tabItem {
                     Label(String(localized: "settings.tab.general"), systemImage: "gearshape")
                 }
@@ -38,6 +39,7 @@ struct SettingsView: View {
 // MARK: - General
 
 private struct GeneralTab: View {
+    @ObservedObject var appState: AppState
     @AppStorage("islandPositionMode") private var positionMode = "attached"
 
     var body: some View {
@@ -55,8 +57,32 @@ private struct GeneralTab: View {
             } header: {
                 Text(String(localized: "settings.general.island_section"))
             }
+
+            Section {
+                LabeledContent("Active Player") {
+                    Text(appState.activePlayer.map(Self.displayName(for:)) ?? "Auto")
+                }
+                LabeledContent("Detected Apps") {
+                    Text(
+                        appState.availablePlayers.isEmpty
+                            ? "None"
+                            : appState.availablePlayers.map(Self.displayName(for:)).joined(separator: ", ")
+                    )
+                }
+            } header: {
+                Text("Playback")
+            }
         }
         .formStyle(.grouped)
+    }
+
+    private static func displayName(for player: PlayerKind) -> String {
+        switch player {
+        case .spotify:
+            "Spotify"
+        case .appleMusic:
+            "Apple Music"
+        }
     }
 }
 

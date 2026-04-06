@@ -99,6 +99,10 @@ struct HelpView: View {
                     icon: "music.note.list",
                     items: [
                         HelpItem(
+                            icon: "music.note.house",
+                            text: "Playback is detected automatically from Spotify and Apple Music."
+                        ),
+                        HelpItem(
                             icon: "text.quote",
                             text: String(localized: "help.providers.chain")
                         ),

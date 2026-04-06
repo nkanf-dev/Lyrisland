@@ -11,9 +11,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lyricsPickerWindow: NSWindow?
     private var statusItem: NSStatusItem?
     private let spotifyService = SpotifyAppleScriptService()
+    private let appleMusicService = AppleMusicAppleScriptService()
     let lyricsManager = LyricsManager()
     private let syncEngine = PlaybackSyncEngine()
-    private let appState = AppState()
+    let appState = AppState()
+    private var playbackCoordinator = PlaybackCoordinator()
 
     func applicationDidFinishLaunching(_: Notification) {
         Log.shared.cleanupOldLogs()
@@ -154,7 +156,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func updateMenuInfo(state: SpotifyPlaybackState? = nil) {
+    private func updateMenuInfo(state: PlaybackSnapshot? = nil) {
         if let state {
             trackMenuItem?.title = "\(state.title) — \(state.artist)"
         } else {
@@ -240,13 +242,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private enum PollRate: TimeInterval {
         case playing = 0.2 // 200ms — smooth sync
         case paused = 1.0 // 1s — just watch for resume
-        case notRunning = 3.0 // 3s — check if Spotify launched
+        case notRunning = 3.0 // 3s — check if a supported player launched
     }
 
     private var pollTimer: Timer?
     private var currentPollRate: PollRate = .notRunning
 
     private func startPlaybackMonitoring() {
+        appState.refresh()
         setPollRate(.playing)
     }
 
@@ -256,51 +259,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         currentPollRate = rate
         pollTimer?.invalidate()
         pollTimer = Timer.scheduledTimer(withTimeInterval: rate.rawValue, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.pollSpotify() }
+            Task { @MainActor in self?.pollPlayers() }
         }
         RunLoop.main.add(pollTimer!, forMode: .common)
     }
 
-    private var lastTrackId: String?
+    private var lastTrackKey: String?
     private var pollCount: Int = 0
 
-    private func pollSpotify() {
+    private func pollPlayers() {
         Task {
-            guard let state = await spotifyService.fetchPlaybackState() else {
-                syncEngine.calibrate(position: 0, isPlaying: false)
-                setPollRate(.notRunning)
+            let spotifySnapshot = await spotifyService.fetchPlaybackState()
+            let appleMusicSnapshot = await appleMusicService.fetchPlaybackState()
+
+            var snapshots: [PlayerKind: PlaybackSnapshot] = [:]
+            if let spotifySnapshot {
+                snapshots[.spotify] = spotifySnapshot
+            }
+            if let appleMusicSnapshot {
+                snapshots[.appleMusic] = appleMusicSnapshot
+            }
+
+            let selected = playbackCoordinator.selectActivePlayback(from: snapshots)
+            appState.refresh()
+            appState.setActivePlayer(selected?.player)
+
+            guard let selected else {
+                syncEngine.playbackController = nil
+                syncEngine.apply(snapshot: nil)
+                lastTrackKey = nil
+                updateMenuInfo()
+                setPollRate(snapshots.isEmpty ? .notRunning : .paused)
                 return
             }
 
-            syncEngine.calibrate(position: state.position, isPlaying: state.isPlaying)
-            syncEngine.setTrackId(state.trackId)
-            syncEngine.setArtworkURL(state.artworkURL)
-            syncEngine.setTrackInfo(title: state.title, artist: state.artist)
-            setPollRate(state.isPlaying ? .playing : .paused)
+            playbackCoordinator.lastActivePlayer = selected.player
+            syncEngine.playbackController = playbackController(for: selected.player)
+            syncEngine.apply(snapshot: selected)
+            setPollRate(selected.isPlaying ? .playing : .paused)
 
-            // Track changed → fetch new lyrics
-            let trackChanged = state.trackId != lastTrackId
+            let trackKey = "\(selected.player.rawValue):\(selected.trackId)"
+            let trackChanged = trackKey != lastTrackKey
             if trackChanged {
-                lastTrackId = state.trackId
+                lastTrackKey = trackKey
                 lyricsPickerWindow?.close()
                 lyricsPickerWindow = nil
                 lyricsManager.resetOffset()
                 UserDefaults.standard.set(0.0, forKey: "currentLyricsOffset")
                 let track = TrackInfo(
-                    id: state.trackId,
-                    title: state.title,
-                    artist: state.artist,
-                    album: state.album,
-                    durationMs: state.durationMs
+                    id: trackKey,
+                    title: selected.title,
+                    artist: selected.artist,
+                    album: selected.album,
+                    durationMs: selected.durationMs
                 )
                 await lyricsManager.loadLyrics(for: track)
             }
 
-            // Refresh menu bar info periodically (every ~1s when playing)
             pollCount += 1
             if trackChanged || pollCount % 5 == 0 {
-                updateMenuInfo(state: state)
+                updateMenuInfo(state: selected)
             }
+        }
+    }
+
+    private func playbackController(for player: PlayerKind) -> PlaybackControlling {
+        switch player {
+        case .spotify:
+            spotifyService
+        case .appleMusic:
+            appleMusicService
         }
     }
 
@@ -372,7 +400,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             window.center()
             window.title = String(localized: "menu.settings")
-            window.contentView = NSHostingView(rootView: SettingsView(lyricsManager: lyricsManager))
+            window.contentView = NSHostingView(rootView: SettingsView(lyricsManager: lyricsManager, appState: appState))
             window.isReleasedWhenClosed = false
             settingsWindow = window
             window.makeKeyAndOrderFront(nil)

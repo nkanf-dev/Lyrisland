@@ -6,11 +6,13 @@ import SwiftUI
 /// Tracks the overall app readiness state for onboarding and status display.
 @MainActor
 final class AppState: ObservableObject {
-    enum SpotifyStatus: Equatable {
+    enum PlayerStatus: Equatable {
         case notInstalled
         case notRunning
         case running
     }
+
+    typealias SpotifyStatus = PlayerStatus
 
     enum PermissionStatus: Equatable {
         case unknown
@@ -18,7 +20,10 @@ final class AppState: ObservableObject {
         case denied
     }
 
-    @Published private(set) var spotifyStatus: SpotifyStatus = .notRunning
+    @Published private var playerStatuses: [PlayerKind: PlayerStatus] = Dictionary(
+        uniqueKeysWithValues: PlayerKind.allCases.map { ($0, .notInstalled) }
+    )
+    @Published private(set) var activePlayer: PlayerKind?
     @Published private(set) var permissionStatus: PermissionStatus = .unknown
     @Published var hasCompletedOnboarding: Bool {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
@@ -137,41 +142,35 @@ final class AppState: ObservableObject {
 
     // MARK: - Spotify Checks
 
-    /// Check if Spotify.app is installed.
-    func checkSpotifyInstalled() -> Bool {
-        NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.spotify.client") != nil
+    var spotifyStatus: SpotifyStatus {
+        status(for: .spotify)
     }
 
-    /// Check if Spotify is currently running.
-    func checkSpotifyRunning() -> Bool {
-        NSRunningApplication.runningApplications(withBundleIdentifier: "com.spotify.client").first != nil
+    var availablePlayers: [PlayerKind] {
+        PlayerKind.allCases.filter { status(for: $0) != .notInstalled }
     }
 
-    /// Attempt an AppleScript call to test permission. Updates status.
-    func checkPermission() {
-        let testScript = """
-        tell application "System Events"
-            return name of first process whose bundle identifier is "com.spotify.client"
-        end tell
-        """
-        guard let script = NSAppleScript(source: testScript) else {
-            permissionStatus = .denied
-            return
+    func status(for player: PlayerKind) -> PlayerStatus {
+        playerStatuses[player] ?? .notInstalled
+    }
+
+    func setActivePlayer(_ player: PlayerKind?) {
+        if activePlayer != player {
+            activePlayer = player
         }
-        var error: NSDictionary?
-        script.executeAndReturnError(&error)
-        permissionStatus = (error == nil) ? .granted : .unknown
     }
 
     /// Refresh all status checks.
-    func refresh() {
-        if !checkSpotifyInstalled() {
-            spotifyStatus = .notInstalled
-        } else if checkSpotifyRunning() {
-            spotifyStatus = .running
-        } else {
-            spotifyStatus = .notRunning
+    func refresh(inspector: PlayerEnvironmentInspecting = SystemPlayerEnvironmentInspector()) {
+        for player in PlayerKind.allCases {
+            if !inspector.isInstalled(player) {
+                playerStatuses[player] = .notInstalled
+            } else if inspector.isRunning(player) {
+                playerStatuses[player] = .running
+            } else {
+                playerStatuses[player] = .notRunning
+            }
         }
-        checkPermission()
+        permissionStatus = inspector.hasAutomationPermission() ? .granted : .unknown
     }
 }

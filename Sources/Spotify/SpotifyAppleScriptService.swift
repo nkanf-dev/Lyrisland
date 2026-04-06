@@ -13,7 +13,9 @@ struct SpotifyPlaybackState {
 }
 
 /// Reads Spotify playback state using AppleScript (low-latency, no auth needed).
-final class SpotifyAppleScriptService {
+final class SpotifyAppleScriptService: PlaybackControlling {
+    let player: PlayerKind = .spotify
+
     private let script: String = """
     if application "Spotify" is running then
         tell application "Spotify"
@@ -34,13 +36,28 @@ final class SpotifyAppleScriptService {
 
     private let queue = DispatchQueue(label: "com.lyrisland.applescript", qos: .userInitiated)
 
-    func fetchPlaybackState() async -> SpotifyPlaybackState? {
+    func fetchSpotifyPlaybackState() async -> SpotifyPlaybackState? {
         await withCheckedContinuation { continuation in
             queue.async { [script] in
                 let result = Self.executeScript(script)
                 continuation.resume(returning: result)
             }
         }
+    }
+
+    func fetchPlaybackState() async -> PlaybackSnapshot? {
+        guard let state = await fetchSpotifyPlaybackState() else { return nil }
+        return PlaybackSnapshot(
+            player: .spotify,
+            trackId: state.trackId,
+            title: state.title,
+            artist: state.artist,
+            album: state.album,
+            durationMs: state.durationMs,
+            position: state.position,
+            isPlaying: state.isPlaying,
+            artworkURL: state.artworkURL
+        )
     }
 
     // MARK: - Playback Controls

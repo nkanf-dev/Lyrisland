@@ -30,7 +30,7 @@ struct OnboardingView: View {
                 case 0:
                     welcomeStep
                 case 1:
-                    spotifyCheckStep
+                    playerCheckStep
                 case 2:
                     permissionStep
                 default:
@@ -83,37 +83,52 @@ struct OnboardingView: View {
         }
     }
 
-    private var spotifyCheckStep: some View {
+    private var playerCheckStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            stepTitle(String(localized: "onboarding.spotify_check"))
+            stepTitle("Spotify and Apple Music")
 
-            let status = appState.spotifyStatus
-            HStack(spacing: 12) {
-                Image(systemName: statusIcon(for: status))
-                    .font(.system(size: 28))
-                    .foregroundStyle(statusColor(for: status))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(statusTitle(for: status))
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white)
-                    Text(statusSubtitle(for: status))
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
-
-            if status == .notRunning || status == .notInstalled {
-                Button(String(localized: "onboarding.open_spotify")) {
-                    NSWorkspace.shared.open(URL(string: "spotify:")!)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        appState.refresh()
+            ForEach(PlayerKind.allCases, id: \.self) { player in
+                let status = appState.status(for: player)
+                HStack(spacing: 12) {
+                    Image(systemName: statusIcon(for: status))
+                        .font(.system(size: 28))
+                        .foregroundStyle(statusColor(for: status))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(displayName(for: player))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.white)
+                        Text(statusSubtitle(for: status))
+                            .font(.system(size: 12))
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(.green)
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+            }
+
+            HStack(spacing: 12) {
+                if appState.status(for: .spotify) != .notInstalled {
+                    Button("Open Spotify") {
+                        NSWorkspace.shared.open(URL(string: "spotify:")!)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            appState.refresh()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.green)
+                }
+
+                if appState.status(for: .appleMusic) != .notInstalled {
+                    Button("Open Music") {
+                        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Music.app"))
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            appState.refresh()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.green)
+                }
             }
 
             Button(String(localized: "onboarding.refresh")) { appState.refresh() }
@@ -205,7 +220,16 @@ struct OnboardingView: View {
         }
     }
 
-    private func statusIcon(for status: AppState.SpotifyStatus) -> String {
+    private func displayName(for player: PlayerKind) -> String {
+        switch player {
+        case .spotify:
+            "Spotify"
+        case .appleMusic:
+            "Apple Music"
+        }
+    }
+
+    private func statusIcon(for status: AppState.PlayerStatus) -> String {
         switch status {
         case .notInstalled: "xmark.circle.fill"
         case .notRunning: "moon.circle.fill"
@@ -213,7 +237,7 @@ struct OnboardingView: View {
         }
     }
 
-    private func statusColor(for status: AppState.SpotifyStatus) -> Color {
+    private func statusColor(for status: AppState.PlayerStatus) -> Color {
         switch status {
         case .notInstalled: .red
         case .notRunning: .orange
@@ -221,19 +245,11 @@ struct OnboardingView: View {
         }
     }
 
-    private func statusTitle(for status: AppState.SpotifyStatus) -> String {
+    private func statusSubtitle(for status: AppState.PlayerStatus) -> String {
         switch status {
-        case .notInstalled: String(localized: "onboarding.spotify.not_found")
-        case .notRunning: String(localized: "onboarding.spotify.not_running")
-        case .running: String(localized: "onboarding.spotify.running")
-        }
-    }
-
-    private func statusSubtitle(for status: AppState.SpotifyStatus) -> String {
-        switch status {
-        case .notInstalled: String(localized: "onboarding.spotify.install_hint")
-        case .notRunning: String(localized: "onboarding.spotify.launch_hint")
-        case .running: String(localized: "onboarding.spotify.ready_hint")
+        case .notInstalled: "App not installed"
+        case .notRunning: "Installed, but not currently running"
+        case .running: "Running and ready for lyric sync"
         }
     }
 }

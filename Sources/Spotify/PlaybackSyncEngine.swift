@@ -30,8 +30,13 @@ final class PlaybackSyncEngine: ObservableObject {
     /// Reference to lyrics for line index caching.
     weak var lyricsManager: LyricsManager?
 
-    /// Reference to Spotify service for playback commands.
-    var spotifyService: SpotifyAppleScriptService?
+    /// Reference to the active playback controller for playback commands.
+    var playbackController: PlaybackControlling?
+
+    /// Temporary compatibility shim while the rest of the app is still Spotify-shaped.
+    var spotifyService: SpotifyAppleScriptService? {
+        didSet { playbackController = spotifyService }
+    }
 
     /// The most recent anchor: (system timestamp, playback position in seconds).
     private var anchor: (date: Date, position: TimeInterval)?
@@ -77,18 +82,46 @@ final class PlaybackSyncEngine: ObservableObject {
         if artist != trackArtist { trackArtist = artist }
     }
 
+    func apply(snapshot: PlaybackSnapshot?) {
+        guard let snapshot else {
+            calibrate(position: 0, isPlaying: false)
+            setTrackId(nil)
+            setArtworkURL(nil)
+            setTrackInfo(title: nil, artist: nil)
+            return
+        }
+
+        calibrate(position: snapshot.position, isPlaying: snapshot.isPlaying)
+        setTrackId(snapshot.trackId)
+        setArtworkURL(snapshot.artworkURL)
+        setTrackInfo(title: snapshot.title, artist: snapshot.artist)
+        position = snapshot.position
+    }
+
     // MARK: - Playback Controls
 
     func playPause() {
-        Task { await spotifyService?.playPause() }
+        Task { await playPauseNow() }
     }
 
     func nextTrack() {
-        Task { await spotifyService?.nextTrack() }
+        Task { await nextTrackNow() }
     }
 
     func previousTrack() {
-        Task { await spotifyService?.previousTrack() }
+        Task { await previousTrackNow() }
+    }
+
+    func playPauseNow() async {
+        await playbackController?.playPause()
+    }
+
+    func nextTrackNow() async {
+        await playbackController?.nextTrack()
+    }
+
+    func previousTrackNow() async {
+        await playbackController?.previousTrack()
     }
 
     /// Linearly interpolated position.
